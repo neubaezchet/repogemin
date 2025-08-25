@@ -127,6 +127,8 @@ const App = () => {
     setStep(1);
     setCedula('');
     setIsCedulaValid(false);
+    setCedula('');
+    setIsCedulaValid(false);
     setUserName('');
     setUserCompany('');
     setIncapacityType(null);
@@ -148,36 +150,25 @@ const App = () => {
     setIsCedulaValid(numericValue.length >= 7);
   };
 
+  // Se ha reemplazado la lógica de simulación con la llamada a la API real.
   const handleCedulaSubmit = async (e) => {
     e.preventDefault();
     if (!isCedulaValid) return;
-
+  
     setApiError(null);
     setIsSubmitting(true);
-
+  
     try {
-      // TODO: Realizar llamada a tu API para validar la cédula
-      // const response = await fetch('/api/validate-cedula', {
-      //   method: 'POST',
-      //   headers: { 'Content-Type': 'application/json' },
-      //   body: JSON.stringify({ cedula }),
-      // });
-      // const data = await response.json();
-
-      // if (response.ok) {
-      //   setUserName(data.userName);
-      //   setUserCompany(data.userCompany);
-      //   setStep(2);
-      // } else {
-      //   setApiError(data.error || 'Error al validar la cédula. Inténtalo de nuevo.');
-      // }
-      
-      // Lógica de simulación para mostrar el flujo, reemplazar con el código de arriba
-      console.log(`Simulando validación de cédula para: ${cedula}`);
-      setUserName('Juan Pérez');
-      setUserCompany('Empresa Ejemplo S.A.S.');
-      setStep(2);
-      
+      const response = await fetch(`${process.env.REACT_APP_BACKEND_URL}/empleados/${cedula}`);
+      const data = await response.json();
+  
+      if (response.ok) {
+        setUserName(data.nombre);
+        setUserCompany(data.empresa);
+        setStep(2);
+      } else {
+        setApiError(data.error || 'Error al validar la cédula. Inténtalo de nuevo.');
+      }
     } catch (error) {
       setApiError('Error de conexión. Inténtalo de nuevo.');
     } finally {
@@ -257,15 +248,15 @@ const App = () => {
     try {
       // TODO: Realizar la llamada a tu API para procesar la solicitud
       // const response = await fetch('/api/submit-incapacity', {
-      //   method: 'POST',
-      //   body: formData,
+      //    method: 'POST',
+      //    body: formData,
       // });
       // const data = await response.json();
 
       // if (response.ok) {
-      //   setSubmissionComplete(true);
+      //    setSubmissionComplete(true);
       // } else {
-      //   setApiError(data.error || 'Error al enviar la solicitud. Inténtalo de nuevo.');
+      //    setApiError(data.error || 'Error al enviar la solicitud. Inténtalo de nuevo.');
       // }
 
       // Lógica de simulación para mostrar el flujo, reemplazar con el código de arriba
@@ -779,44 +770,36 @@ const App = () => {
                         <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white inline-block" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
                           <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
                           <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.965l3-2.674z"></path>
-                      </svg>
-                      Validando...
-                    </>
-                  ) : (
-                    <>
-                      <CheckIcon className="h-5 w-5 inline-block -mt-1 mr-2" />
-                      Confirmar y Enviar
-                    </>
-                  )}
-                </button>
-              </div>
-            </form>
+                        </svg>
+                        Validando...
+                      </>
+                    ) : (
+                      'Enviar Solicitud'
+                    )}
+                  </button>
+                </div>
+              </form>
             </motion.div>
           )}
 
-          {submissionComplete && (
+          {step === 7 && (
             <motion.div
-              key="submissionComplete"
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -20 }}
+              key="step7"
+              initial={{ opacity: 0, scale: 0.9 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.9 }}
               transition={{ duration: 0.2 }}
-              className="text-center space-y-6"
+              className={`p-8 rounded-2xl ${currentTheme.success} text-center`}
             >
-              <CheckCircleIcon className={`h-20 w-20 mx-auto ${currentTheme.valid}`} />
-              <h2 className="text-3xl font-bold">¡Solicitud enviada!</h2>
-              <p className="text-lg opacity-80">
-                Tu solicitud de incapacidad ha sido recibida y será procesada.
-              </p>
-              <p className="text-sm opacity-60">
-                Recibirás una notificación por correo electrónico con la confirmación.
-              </p>
+              <CheckCircleIcon className="h-16 w-16 mx-auto mb-4" />
+              <h2 className="text-xl font-bold mb-2">¡Solicitud enviada con éxito!</h2>
+              <p className="text-sm opacity-90 mb-6">Hemos recibido tu solicitud. Te notificaremos cualquier actualización a través del correo y teléfono que proporcionaste.</p>
               <button
                 onClick={resetApp}
-                className={`w-full p-3 rounded-xl font-bold transition-colors ${currentTheme.buttonOutline}`}
+                className={`w-full p-3 rounded-xl font-bold transition-colors ${currentTheme.button}`}
               >
                 <ArrowPathIcon className="h-5 w-5 inline-block -mt-1 mr-2" />
-                Realizar otra solicitud
+                Nueva solicitud
               </button>
             </motion.div>
           )}
