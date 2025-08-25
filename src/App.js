@@ -127,8 +127,6 @@ const App = () => {
     setStep(1);
     setCedula('');
     setIsCedulaValid(false);
-    setCedula('');
-    setIsCedulaValid(false);
     setUserName('');
     setUserCompany('');
     setIncapacityType(null);
@@ -150,7 +148,6 @@ const App = () => {
     setIsCedulaValid(numericValue.length >= 7);
   };
 
-  // Se ha reemplazado la lógica de simulación con la llamada a la API real.
   const handleCedulaSubmit = async (e) => {
     e.preventDefault();
     if (!isCedulaValid) return;
@@ -159,7 +156,9 @@ const App = () => {
     setIsSubmitting(true);
   
     try {
-      const response = await fetch(`${process.env.REACT_APP_BACKEND_URL}/empleados/${cedula}`);
+      // Uso de la variable de entorno para la URL del backend
+      const backendUrl = process.env.REACT_APP_BACKEND_URL;
+      const response = await fetch(`${backendUrl}/empleados/${cedula}`);
       const data = await response.json();
   
       if (response.ok) {
@@ -247,7 +246,8 @@ const App = () => {
 
     try {
       // TODO: Realizar la llamada a tu API para procesar la solicitud
-      // const response = await fetch('/api/submit-incapacity', {
+      // const backendUrl = process.env.REACT_APP_BACKEND_URL;
+      // const response = await fetch(`${backendUrl}/submit-incapacity`, {
       //    method: 'POST',
       //    body: formData,
       // });
@@ -655,14 +655,14 @@ const App = () => {
                   onClick={() => setStep(3)}
                   className={`w-full p-3 rounded-xl font-bold border transition-colors ${currentTheme.buttonOutline}`}
                 >
-                  Volver
+                  Atrás
                 </button>
                 <button
                   onClick={() => setStep(5)}
-                  disabled={!subType || !daysOfIncapacity}
-                  className={`w-full p-3 rounded-xl font-bold transition-colors ${currentTheme.button} ${!subType || !daysOfIncapacity ? 'opacity-50 cursor-not-allowed' : ''}`}
+                  disabled={!subType || !daysOfIncapacity || (incapacityType === 'maternity' && !specificFields.births) || (incapacityType === 'paternity' && !specificFields.births)}
+                  className={`w-full p-3 rounded-xl font-bold transition-colors duration-200 ${currentTheme.button} ${(!subType || !daysOfIncapacity || (incapacityType === 'maternity' && !specificFields.births) || (incapacityType === 'paternity' && !specificFields.births)) ? 'opacity-50 cursor-not-allowed' : ''}`}
                 >
-                  Continuar
+                  Siguiente
                 </button>
               </div>
             </motion.div>
@@ -675,28 +675,28 @@ const App = () => {
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -20 }}
               transition={{ duration: 0.2 }}
+              className="space-y-4"
             >
-              {renderSpecificFields()}
-              <div className="mt-6">
-                <h3 className="text-lg font-bold mb-2">Sube tus documentos</h3>
-                <DocumentsUploadSection />
+              <div className="flex justify-between items-center">
+                <h2 className="text-xl font-bold">Documentos requeridos</h2>
+                <button onClick={() => setStep(incapacityType === 'other' ? 4 : 3)} className={`p-2 rounded-full ${currentTheme.buttonOutline}`}>
+                  <ChevronLeftIcon className="h-5 w-5" />
+                </button>
               </div>
-
+              <DocumentsUploadSection />
               <div className="flex gap-4 mt-8">
                 <button
                   onClick={() => setStep(incapacityType === 'other' ? 4 : 3)}
                   className={`w-full p-3 rounded-xl font-bold border transition-colors ${currentTheme.buttonOutline}`}
                 >
-                  <ChevronLeftIcon className="h-5 w-5 inline-block -mt-1 mr-2" />
-                  Volver
+                  Atrás
                 </button>
                 <button
                   onClick={handleSubmit}
                   disabled={!isSubmissionReady}
-                  className={`w-full p-3 rounded-xl font-bold transition-colors ${currentTheme.button} ${!isSubmissionReady ? 'opacity-50 cursor-not-allowed' : ''}`}
+                  className={`w-full p-3 rounded-xl font-bold transition-colors duration-200 ${currentTheme.button} ${!isSubmissionReady ? 'opacity-50 cursor-not-allowed' : ''}`}
                 >
-                  <PaperAirplaneIcon className="h-5 w-5 inline-block -mt-1 mr-2" />
-                  Enviar solicitud
+                  Siguiente
                 </button>
               </div>
             </motion.div>
@@ -709,97 +709,97 @@ const App = () => {
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -20 }}
               transition={{ duration: 0.2 }}
+              className="space-y-4"
             >
-              <h2 className="text-xl font-bold mb-6">Información de contacto</h2>
-              <p className="text-sm opacity-70 mb-4">Por favor, confirma tu información de contacto para recibir notificaciones sobre tu solicitud.</p>
-              <form onSubmit={handleFinalSubmit} className="space-y-4">
-                <div>
-                  <label htmlFor="email" className="block text-sm font-medium">
-                    Correo electrónico
-                  </label>
-                  <div className={`relative mt-1 rounded-xl shadow-sm ${currentTheme.input}`}>
-                    <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
-                      <AtSymbolIcon className={`h-5 w-5 ${currentTheme.icon}`} />
-                    </div>
-                    <input
-                      type="email"
-                      id="email"
-                      value={email}
-                      onChange={(e) => setEmail(e.target.value)}
-                      className={`block w-full rounded-xl border-0 p-3 pl-10 focus:ring-2 sm:text-sm transition-colors ${currentTheme.input}`}
-                      placeholder="ejemplo@empresa.com"
-                      required
-                    />
+              <div className="flex justify-between items-center">
+                <h2 className="text-xl font-bold">Información de contacto</h2>
+                <button onClick={() => setStep(5)} className={`p-2 rounded-full ${currentTheme.buttonOutline}`}>
+                  <ChevronLeftIcon className="h-5 w-5" />
+                </button>
+              </div>
+              <div>
+                <label htmlFor="email" className="block text-sm font-medium">
+                  Correo electrónico
+                </label>
+                <div className="relative mt-1 rounded-xl shadow-sm">
+                  <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
+                    <AtSymbolIcon className={`h-5 w-5 ${currentTheme.icon}`} aria-hidden="true" />
                   </div>
+                  <input
+                    type="email"
+                    id="email"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    className={`block w-full rounded-xl border-0 p-3 pl-10 focus:ring-2 sm:text-sm transition-colors ${currentTheme.input}`}
+                    placeholder="tucorreo@ejemplo.com"
+                  />
                 </div>
-                <div>
-                  <label htmlFor="phone" className="block text-sm font-medium">
-                    Número de teléfono
-                  </label>
-                  <div className={`relative mt-1 rounded-xl shadow-sm ${currentTheme.input}`}>
-                    <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
-                      <PhoneIcon className={`h-5 w-5 ${currentTheme.icon}`} />
-                    </div>
-                    <input
-                      type="tel"
-                      id="phone"
-                      value={phoneNumber}
-                      onChange={(e) => setPhoneNumber(e.target.value)}
-                      className={`block w-full rounded-xl border-0 p-3 pl-10 focus:ring-2 sm:text-sm transition-colors ${currentTheme.input}`}
-                      placeholder="310 555 1234"
-                      required
-                    />
+              </div>
+              <div>
+                <label htmlFor="phoneNumber" className="block text-sm font-medium">
+                  Número de celular
+                </label>
+                <div className="relative mt-1 rounded-xl shadow-sm">
+                  <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
+                    <PhoneIcon className={`h-5 w-5 ${currentTheme.icon}`} aria-hidden="true" />
                   </div>
+                  <input
+                    type="tel"
+                    id="phoneNumber"
+                    value={phoneNumber}
+                    onChange={(e) => setPhoneNumber(e.target.value)}
+                    className={`block w-full rounded-xl border-0 p-3 pl-10 focus:ring-2 sm:text-sm transition-colors ${currentTheme.input}`}
+                    placeholder="300 123 4567"
+                  />
                 </div>
-                <div className="flex gap-4 mt-8">
-                  <button
-                    onClick={() => setStep(5)}
-                    type="button"
-                    className={`w-full p-3 rounded-xl font-bold border transition-colors ${currentTheme.buttonOutline}`}
-                  >
-                    <ChevronLeftIcon className="h-5 w-5 inline-block -mt-1 mr-2" />
-                    Volver
-                  </button>
-                  <button
-                    type="submit"
-                    disabled={!email || !phoneNumber || isSubmitting}
-                    className={`w-full p-3 rounded-xl font-bold transition-colors ${currentTheme.button} ${(!email || !phoneNumber || isSubmitting) ? 'opacity-50 cursor-not-allowed' : ''}`}
-                  >
-                    {isSubmitting ? (
-                      <>
-                        <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white inline-block" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.965l3-2.674z"></path>
-                        </svg>
-                        Validando...
-                      </>
-                    ) : (
-                      'Enviar Solicitud'
-                    )}
-                  </button>
-                </div>
-              </form>
+              </div>
+              <div className="flex gap-4 mt-8">
+                <button
+                  onClick={() => setStep(5)}
+                  className={`w-full p-3 rounded-xl font-bold border transition-colors ${currentTheme.buttonOutline}`}
+                >
+                  Atrás
+                </button>
+                <button
+                  onClick={handleFinalSubmit}
+                  disabled={!email || !phoneNumber || isSubmitting}
+                  className={`w-full p-3 rounded-xl font-bold transition-colors duration-200 ${currentTheme.button} ${(!email || !phoneNumber || isSubmitting) ? 'opacity-50 cursor-not-allowed' : ''}`}
+                >
+                  {isSubmitting ? (
+                    <>
+                      <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white inline-block" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.965l3-2.674z"></path>
+                      </svg>
+                      Enviando...
+                    </>
+                  ) : (
+                    'Finalizar y enviar'
+                  )}
+                </button>
+              </div>
             </motion.div>
           )}
 
-          {step === 7 && (
+          {submissionComplete && (
             <motion.div
               key="step7"
-              initial={{ opacity: 0, scale: 0.9 }}
-              animate={{ opacity: 1, scale: 1 }}
-              exit={{ opacity: 0, scale: 0.9 }}
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -20 }}
               transition={{ duration: 0.2 }}
-              className={`p-8 rounded-2xl ${currentTheme.success} text-center`}
+              className="text-center"
             >
-              <CheckCircleIcon className="h-16 w-16 mx-auto mb-4" />
-              <h2 className="text-xl font-bold mb-2">¡Solicitud enviada con éxito!</h2>
-              <p className="text-sm opacity-90 mb-6">Hemos recibido tu solicitud. Te notificaremos cualquier actualización a través del correo y teléfono que proporcionaste.</p>
+              <CheckCircleIcon className={`h-16 w-16 mx-auto mb-4 ${currentTheme.success}`} />
+              <h2 className="text-2xl font-bold mb-2">Solicitud enviada con éxito</h2>
+              <p className="text-sm opacity-80 mb-6">
+                Hemos recibido tu solicitud. Pronto nos comunicaremos contigo.
+              </p>
               <button
                 onClick={resetApp}
                 className={`w-full p-3 rounded-xl font-bold transition-colors ${currentTheme.button}`}
               >
-                <ArrowPathIcon className="h-5 w-5 inline-block -mt-1 mr-2" />
-                Nueva solicitud
+                Volver al inicio
               </button>
             </motion.div>
           )}
