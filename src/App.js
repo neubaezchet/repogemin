@@ -227,57 +227,44 @@ const App = () => {
     }
   };
 
+  // --- ESTE ES EL CÓDIGO CORREGIDO PARA ENVIAR AL BACKEND ---
   const handleFinalSubmit = async (e) => {
     e.preventDefault();
     setIsSubmitting(true);
-    
-    // Aquí puedes preparar los datos y los archivos para enviar a tu backend
+
     const formData = new FormData();
     formData.append('cedula', cedula);
-    formData.append('incapacityType', incapacityType);
-    formData.append('subType', subType || '');
-    formData.append('daysOfIncapacity', daysOfIncapacity);
-    formData.append('email', email);
-    formData.append('phoneNumber', phoneNumber);
-    
-    Object.keys(uploadedFiles).forEach(docName => {
-      formData.append(docName, uploadedFiles[docName]);
-    });
+    formData.append('empresa', userCompany);
+    // Determina el tipo de incapacidad que espera el backend ("maternity", "paternity", etc)
+    formData.append('tipo', incapacityType || subType || 'general');
+
+    // El backend actual solo acepta UN archivo en el campo "archivo"
+    // Si tienes varios tipos de documentos, por ahora solo envía el primero:
+    const archivos = Object.values(uploadedFiles);
+    if (archivos.length) {
+      formData.append('archivo', archivos[0]);
+    }
 
     try {
-      // TODO: Realizar la llamada a tu API para procesar la solicitud
-      // const backendUrl = process.env.REACT_APP_BACKEND_URL;
-      // const response = await fetch(`${backendUrl}/submit-incapacity`, {
-      //    method: 'POST',
-      //    body: formData,
-      // });
-      // const data = await response.json();
-
-      // if (response.ok) {
-      //    setSubmissionComplete(true);
-      // } else {
-      //    setApiError(data.error || 'Error al enviar la solicitud. Inténtalo de nuevo.');
-      // }
-
-      // Lógica de simulación para mostrar el flujo, reemplazar con el código de arriba
-      console.log('Simulando envío de solicitud a backend con datos y archivos:');
-      console.log({
-        cedula,
-        incapacityType,
-        subType,
-        daysOfIncapacity,
-        email,
-        phoneNumber,
-        files: Object.values(uploadedFiles).map(f => f.name),
+      const backendUrl = process.env.REACT_APP_BACKEND_URL;
+      const response = await fetch(`${backendUrl}/subir-incapacidad/`, {
+        method: 'POST',
+        body: formData,
       });
-      setSubmissionComplete(true);
+      const data = await response.json();
 
+      if (response.ok) {
+        setSubmissionComplete(true);
+      } else {
+        setApiError(data.error || 'Error al enviar la solicitud. Inténtalo de nuevo.');
+      }
     } catch (error) {
       setApiError('Error de conexión. Inténtalo de nuevo.');
     } finally {
       setIsSubmitting(false);
     }
   };
+  // --- FIN DEL CÓDIGO MODIFICADO ---
 
   const getStepTitle = () => {
     switch (step) {
