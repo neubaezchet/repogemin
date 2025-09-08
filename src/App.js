@@ -151,16 +151,15 @@ const App = () => {
   const handleCedulaSubmit = async (e) => {
     e.preventDefault();
     if (!isCedulaValid) return;
-  
+
     setApiError(null);
     setIsSubmitting(true);
-  
+
     try {
-      // Uso de la variable de entorno para la URL del backend
       const backendUrl = process.env.REACT_APP_BACKEND_URL;
       const response = await fetch(`${backendUrl}/empleados/${cedula}`);
       const data = await response.json();
-  
+
       if (response.ok) {
         setUserName(data.nombre);
         setUserCompany(data.empresa);
@@ -227,7 +226,7 @@ const App = () => {
     }
   };
 
-  // --- ESTE ES EL CÓDIGO CORREGIDO PARA ENVIAR AL BACKEND ---
+  // FUNCIÓN CORREGIDA PARA ENVÍO DE ARCHIVOS (plural)
   const handleFinalSubmit = async (e) => {
     e.preventDefault();
     setIsSubmitting(true);
@@ -235,15 +234,13 @@ const App = () => {
     const formData = new FormData();
     formData.append('cedula', cedula);
     formData.append('empresa', userCompany);
-    // Determina el tipo de incapacidad que espera el backend ("maternity", "paternity", etc)
     formData.append('tipo', incapacityType || subType || 'general');
 
-    // El backend actual solo acepta UN archivo en el campo "archivo"
-    // Si tienes varios tipos de documentos, por ahora solo envía el primero:
+    // Enviar todos los archivos con nombre "archivos"
     const archivos = Object.values(uploadedFiles);
-    if (archivos.length) {
-      formData.append('archivo', archivos[0]);
-    }
+    archivos.forEach(file => {
+      formData.append('archivos', file); // ← nombre plural, igual que el backend
+    });
 
     try {
       const backendUrl = process.env.REACT_APP_BACKEND_URL;
@@ -264,7 +261,6 @@ const App = () => {
       setIsSubmitting(false);
     }
   };
-  // --- FIN DEL CÓDIGO MODIFICADO ---
 
   const getStepTitle = () => {
     switch (step) {
@@ -286,7 +282,7 @@ const App = () => {
           ...prev,
           [docName]: Object.assign(file, {
             preview: URL.createObjectURL(file),
-            isLegible: true, // Esta lógica de "legibilidad" la manejaría tu backend
+            isLegible: true,
           }),
         }));
       }
