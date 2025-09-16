@@ -238,7 +238,7 @@ const App = () => {
     }
   };
 
-  // FUNCIÓN CORREGIDA PARA ENVÍO DE ARCHIVOS (plural) + CONSOLE LOG PARA DEBUG
+  // FUNCIÓN DE ENVÍO REAL DE ARCHIVOS Y DATOS AL BACKEND (CORRECTA)
   const handleFinalSubmit = async (e) => {
     e.preventDefault();
     setIsSubmitting(true);
@@ -247,17 +247,18 @@ const App = () => {
     formData.append('cedula', cedula);
     formData.append('empresa', userCompany);
     formData.append('tipo', incapacityType || subType || 'general');
+    formData.append('email', email);
+    formData.append('telefono', phoneNumber);
 
     // Enviar todos los archivos con nombre "archivos"
     const archivos = Object.values(uploadedFiles);
-    archivos.forEach((file) => {
-      formData.append('archivos', file); // ← nombre plural, igual que el backend
+    archivos.forEach(file => {
+      formData.append('archivos', file);
     });
 
     try {
       const backendUrl = process.env.REACT_APP_BACKEND_URL;
-      // 👇 LOG importante para debug
-      console.log("Enviando incapacidad al backend:", `${backendUrl}/subir-incapacidad/`);
+      // Enviar al backend real
       const response = await fetch(`${backendUrl}/subir-incapacidad/`, {
         method: 'POST',
         body: formData,
