@@ -6,21 +6,18 @@ import {
   CheckCircleIcon,
   ExclamationCircleIcon,
   InformationCircleIcon,
-  PaperAirplaneIcon,
   CloudArrowUpIcon,
   HeartIcon,
   UserIcon,
   ClipboardDocumentListIcon,
   ChevronLeftIcon,
-  ArrowPathIcon,
   FolderOpenIcon,
   XMarkIcon,
   AtSymbolIcon,
   PhoneIcon,
-  CheckIcon,
 } from '@heroicons/react/24/solid';
 
-// Definición de temas de color para la aplicación
+// Temas
 const themes = {
   light: {
     bg: 'bg-gray-50 text-gray-900',
@@ -78,21 +75,36 @@ const themes = {
   },
 };
 
-// Objeto que define los documentos requeridos para cada tipo de incapacidad.
+// Documentos requeridos
 const documentRequirements = {
-  maternity: ['Licencia o incapacidad de maternidad', 'Epicrisis o resumen clínico', 'Cédula de la madre', 'Registro civil', 'Certificado de nacido vivo'],
+  maternity: [
+    'Licencia o incapacidad de maternidad',
+    'Epicrisis o resumen clínico',
+    'Cédula de la madre',
+    'Registro civil',
+    'Certificado de nacido vivo',
+  ],
   paternity: (motherWorks) => {
-    const docs = ['Epicrisis o resumen clínico', 'Cédula del padre', 'Registro civil', 'Certificado de nacido vivo'];
+    const docs = [
+      'Epicrisis o resumen clínico',
+      'Cédula del padre',
+      'Registro civil',
+      'Certificado de nacido vivo',
+    ];
     if (motherWorks) {
       docs.push('Licencia o incapacidad de maternidad');
     }
     return docs;
   },
   general: (days) => {
-    return days <= 2 ? ['Incapacidad médica'] : ['Incapacidad médica', 'Epicrisis o resumen clínico'];
+    return days <= 2
+      ? ['Incapacidad médica']
+      : ['Incapacidad médica', 'Epicrisis o resumen clínico'];
   },
   labor: (days) => {
-    return days <= 2 ? ['Incapacidad médica'] : ['Incapacidad médica', 'Epicrisis o resumen clínico'];
+    return days <= 2
+      ? ['Incapacidad médica']
+      : ['Incapacidad médica', 'Epicrisis o resumen clínico'];
   },
   traffic: () => {
     return ['Incapacidad médica', 'Epicrisis o resumen clínico', 'FURIPS', 'SOAT (si aplica)'];
@@ -104,7 +116,6 @@ const App = () => {
   const [step, setStep] = useState(1);
   const [cedula, setCedula] = useState('');
   const [isCedulaValid, setIsCedulaValid] = useState(false);
-  // Estos estados se poblarán desde el backend después de validar la cédula
   const [userName, setUserName] = useState('');
   const [userCompany, setUserCompany] = useState('');
   const [incapacityType, setIncapacityType] = useState(null);
@@ -201,7 +212,8 @@ const App = () => {
 
   const getRequiredDocs = useMemo(() => {
     if (incapacityType === 'maternity') return documentRequirements.maternity;
-    if (incapacityType === 'paternity') return documentRequirements.paternity(specificFields.motherWorks === 'Sí');
+    if (incapacityType === 'paternity')
+      return documentRequirements.paternity(specificFields.motherWorks === 'Sí');
     if (incapacityType === 'other') {
       if (!subType || !daysOfIncapacity) return [];
       const days = parseInt(daysOfIncapacity, 10);
@@ -215,7 +227,7 @@ const App = () => {
   const isSubmissionReady = useMemo(() => {
     const requiredDocs = getRequiredDocs;
     if (requiredDocs.length === 0) return false;
-    return requiredDocs.every(docName => uploadedFiles[docName]);
+    return requiredDocs.every((docName) => uploadedFiles[docName]);
   }, [getRequiredDocs, uploadedFiles]);
 
   const handleSubmit = (e) => {
@@ -226,7 +238,7 @@ const App = () => {
     }
   };
 
-  // FUNCIÓN CORREGIDA PARA ENVÍO DE ARCHIVOS (plural)
+  // FUNCIÓN CORREGIDA PARA ENVÍO DE ARCHIVOS (plural) + CONSOLE LOG PARA DEBUG
   const handleFinalSubmit = async (e) => {
     e.preventDefault();
     setIsSubmitting(true);
@@ -238,12 +250,14 @@ const App = () => {
 
     // Enviar todos los archivos con nombre "archivos"
     const archivos = Object.values(uploadedFiles);
-    archivos.forEach(file => {
+    archivos.forEach((file) => {
       formData.append('archivos', file); // ← nombre plural, igual que el backend
     });
 
     try {
       const backendUrl = process.env.REACT_APP_BACKEND_URL;
+      // 👇 LOG importante para debug
+      console.log("Enviando incapacidad al backend:", `${backendUrl}/subir-incapacidad/`);
       const response = await fetch(`${backendUrl}/subir-incapacidad/`, {
         method: 'POST',
         body: formData,
@@ -264,29 +278,39 @@ const App = () => {
 
   const getStepTitle = () => {
     switch (step) {
-      case 1: return 'Ingresa tu número de cédula';
-      case 2: return 'Confirma tu identidad';
-      case 3: return 'Selecciona el tipo de incapacidad';
-      case 4: return 'Detalla el tipo de incapacidad';
-      case 5: return 'Sube los documentos requeridos';
-      case 6: return 'Confirma tu información de contacto';
-      default: return 'Sistema de incapacidades';
+      case 1:
+        return 'Ingresa tu número de cédula';
+      case 2:
+        return 'Confirma tu identidad';
+      case 3:
+        return 'Selecciona el tipo de incapacidad';
+      case 4:
+        return 'Detalla el tipo de incapacidad';
+      case 5:
+        return 'Sube los documentos requeridos';
+      case 6:
+        return 'Confirma tu información de contacto';
+      default:
+        return 'Sistema de incapacidades';
     }
   };
 
   const DropzoneArea = ({ docName }) => {
-    const onDrop = useCallback((acceptedFiles) => {
-      const file = acceptedFiles[0];
-      if (file) {
-        setUploadedFiles(prev => ({
-          ...prev,
-          [docName]: Object.assign(file, {
-            preview: URL.createObjectURL(file),
-            isLegible: true,
-          }),
-        }));
-      }
-    }, [docName]);
+    const onDrop = useCallback(
+      (acceptedFiles) => {
+        const file = acceptedFiles[0];
+        if (file) {
+          setUploadedFiles((prev) => ({
+            ...prev,
+            [docName]: Object.assign(file, {
+              preview: URL.createObjectURL(file),
+              isLegible: true,
+            }),
+          }));
+        }
+      },
+      [docName]
+    );
 
     const { getRootProps, getInputProps, isDragActive } = useDropzone({
       onDrop,
@@ -303,25 +327,38 @@ const App = () => {
       <div className="w-full">
         <label className="block text-sm font-medium mb-1">{docName}</label>
         {file ? (
-          <div className={`p-3 rounded-xl border flex items-center justify-between ${currentTheme.cardBorder} ${file.isLegible ? 'border-green-400' : 'border-red-400'}`}>
+          <div
+            className={`p-3 rounded-xl border flex items-center justify-between ${
+              currentTheme.cardBorder
+            } ${file.isLegible ? 'border-green-400' : 'border-red-400'}`}
+          >
             <div className="flex items-center gap-2 truncate">
               <FolderOpenIcon className={`h-5 w-5 ${currentTheme.icon}`} />
               <span className="text-sm truncate">{file.name}</span>
             </div>
-            <button onClick={() => setUploadedFiles(prev => {
-              const newFiles = { ...prev };
-              delete newFiles[docName];
-              return newFiles;
-            })} className={`p-1 rounded-full ${currentTheme.secondary} hover:bg-red-100`}>
+            <button
+              onClick={() =>
+                setUploadedFiles((prev) => {
+                  const newFiles = { ...prev };
+                  delete newFiles[docName];
+                  return newFiles;
+                })
+              }
+              className={`p-1 rounded-full ${currentTheme.secondary} hover:bg-red-100`}
+            >
               <XMarkIcon className="h-4 w-4 text-red-500" />
             </button>
           </div>
         ) : (
-          <div {...getRootProps({
-            className: `p-6 rounded-2xl border-2 border-dashed transition-colors duration-200 ease-in-out cursor-pointer ${
-              isDragActive ? currentTheme.dragActive : `${currentTheme.cardBorder} hover:border-blue-500`
-            }`
-          })}>
+          <div
+            {...getRootProps({
+              className: `p-6 rounded-2xl border-2 border-dashed transition-colors duration-200 ease-in-out cursor-pointer ${
+                isDragActive
+                  ? currentTheme.dragActive
+                  : `${currentTheme.cardBorder} hover:border-blue-500`
+              }`,
+            })}
+          >
             <input {...getInputProps()} />
             <CloudArrowUpIcon className={`mx-auto h-8 w-8 ${currentTheme.icon}`} />
             <p className="mt-2 text-xs text-center">
@@ -339,14 +376,16 @@ const App = () => {
       return (
         <div className={`p-4 rounded-xl ${currentTheme.info} text-center`}>
           <InformationCircleIcon className="h-8 w-8 mx-auto mb-2" />
-          <p className="text-sm">Completa la información de tu incapacidad para ver los documentos requeridos.</p>
+          <p className="text-sm">
+            Completa la información de tu incapacidad para ver los documentos requeridos.
+          </p>
         </div>
       );
     }
 
     return (
       <div className="space-y-4">
-        {docs.map(docName => (
+        {docs.map((docName) => (
           <DropzoneArea key={docName} docName={docName} />
         ))}
       </div>
@@ -366,7 +405,9 @@ const App = () => {
             type="number"
             id="births"
             value={specificFields.births}
-            onChange={(e) => setSpecificFields({ ...specificFields, births: e.target.value })}
+            onChange={(e) =>
+              setSpecificFields({ ...specificFields, births: e.target.value })
+            }
             className={`mt-1 block w-full rounded-xl border-0 p-3 shadow-sm focus:ring-2 sm:text-sm transition-colors ${currentTheme.input}`}
           />
         </div>
@@ -385,7 +426,9 @@ const App = () => {
                   name="motherWorks"
                   value="Sí"
                   checked={specificFields.motherWorks === 'Sí'}
-                  onChange={(e) => setSpecificFields({ ...specificFields, motherWorks: e.target.value })}
+                  onChange={(e) =>
+                    setSpecificFields({ ...specificFields, motherWorks: e.target.value })
+                  }
                   className="form-radio"
                 />
                 <span className="text-sm">Sí</span>
@@ -396,7 +439,9 @@ const App = () => {
                   name="motherWorks"
                   value="No"
                   checked={specificFields.motherWorks === 'No'}
-                  onChange={(e) => setSpecificFields({ ...specificFields, motherWorks: e.target.value })}
+                  onChange={(e) =>
+                    setSpecificFields({ ...specificFields, motherWorks: e.target.value })
+                  }
                   className="form-radio"
                 />
                 <span className="text-sm">No</span>
@@ -423,7 +468,7 @@ const App = () => {
         </div>
       );
     }
-    
+
     if (fieldsToRender.length === 0) return null;
 
     return (
@@ -439,7 +484,9 @@ const App = () => {
   };
 
   return (
-    <div className={`min-h-screen p-4 sm:p-8 flex items-center justify-center transition-colors duration-300 ${currentTheme.bg}`}>
+    <div
+      className={`min-h-screen p-4 sm:p-8 flex items-center justify-center transition-colors duration-300 ${currentTheme.bg}`}
+    >
       {apiError && (
         <AnimatePresence>
           <motion.div
@@ -450,8 +497,17 @@ const App = () => {
           >
             <ExclamationCircleIcon className="h-6 w-6" />
             <span className="font-medium text-sm">{apiError}</span>
-            <button onClick={() => setApiError(null)} className="ml-auto p-1 rounded-full hover:bg-white/20 transition-colors">
-              <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <button
+              onClick={() => setApiError(null)}
+              className="ml-auto p-1 rounded-full hover:bg-white/20 transition-colors"
+            >
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                className="h-4 w-4"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+              >
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
               </svg>
             </button>
