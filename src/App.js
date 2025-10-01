@@ -15,9 +15,10 @@ import {
   XMarkIcon,
   AtSymbolIcon,
   PhoneIcon,
+  ExclamationTriangleIcon,
 } from '@heroicons/react/24/solid';
 
-// Temas
+// Temas (sin cambios)
 const themes = {
   light: {
     bg: 'bg-gray-50 text-gray-900',
@@ -31,6 +32,7 @@ const themes = {
     icon: 'text-gray-500',
     success: 'text-green-600 bg-green-100',
     error: 'text-red-600 bg-red-100',
+    warning: 'text-amber-600 bg-amber-100',
     info: 'text-blue-600 bg-blue-100',
     dragActive: 'border-blue-500 bg-blue-50',
     valid: 'text-green-600',
@@ -49,6 +51,7 @@ const themes = {
     icon: 'text-gray-400',
     success: 'text-green-400 bg-green-900',
     error: 'text-red-400 bg-red-900',
+    warning: 'text-amber-400 bg-amber-900',
     info: 'text-blue-400 bg-blue-900',
     dragActive: 'border-blue-500 bg-blue-900',
     valid: 'text-green-400',
@@ -67,6 +70,7 @@ const themes = {
     icon: 'text-slate-500',
     success: 'text-emerald-700 bg-emerald-100',
     error: 'text-rose-700 bg-rose-100',
+    warning: 'text-amber-700 bg-amber-100',
     info: 'text-slate-700 bg-slate-100',
     dragActive: 'border-slate-600 bg-slate-50',
     valid: 'text-emerald-700',
@@ -75,7 +79,7 @@ const themes = {
   },
 };
 
-// Documentos requeridos
+// ACTUALIZADO: Documentos requeridos con lógica de vehículo fantasma
 const documentRequirements = {
   maternity: [
     'Licencia o incapacidad de maternidad',
@@ -106,9 +110,88 @@ const documentRequirements = {
       ? ['Incapacidad médica']
       : ['Incapacidad médica', 'Epicrisis o resumen clínico'];
   },
-  traffic: () => {
-    return ['Incapacidad médica', 'Epicrisis o resumen clínico', 'FURIPS', 'SOAT (si aplica)'];
+  traffic: (isPhantomVehicle) => {
+    const docs = ['Incapacidad médica', 'Epicrisis o resumen clínico', 'FURIPS'];
+    if (!isPhantomVehicle) {
+      docs.push('SOAT');
+    }
+    return docs;
   },
+};
+
+// NUEVO: Función de validación de calidad de imagen (frontend)
+const validateImageQuality = async (file) => {
+  return new Promise((resolve) => {
+    if (file.type === 'application/pdf') {
+      resolve({ isLegible: true, quality: 100, message: 'PDF aceptado' });
+      return;
+    }
+
+    const img = new Image();
+    const url = URL.createObjectURL(file);
+
+    img.onload = () => {
+      const canvas = document.createElement('canvas');
+      const ctx = canvas.getContext('2d');
+      
+      canvas.width = img.width;
+      canvas.height = img.height;
+      ctx.drawImage(img, 0, 0);
+
+      try {
+        const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+        const data = imageData.data;
+
+        let brightness = 0;
+        for (let i = 0; i < data.length; i += 4) {
+          brightness += (data[i] + data[i + 1] + data[i + 2]) / 3;
+        }
+        brightness = brightness / (data.length / 4);
+
+        let edgeCount = 0;
+        for (let i = 0; i < data.length - 4; i += 4) {
+          const diff = Math.abs(data[i] - data[i + 4]);
+          if (diff > 30) edgeCount++;
+        }
+        const sharpness = (edgeCount / (data.length / 4)) * 100;
+
+        const minResolution = 300 * 300;
+        const isBrightnessOk = brightness > 30 && brightness < 240;
+        const isSharpnessOk = sharpness > 0.5;
+        const isResolutionOk = (img.width * img.height) > minResolution;
+
+        const quality = Math.min(100, (
+          (isBrightnessOk ? 40 : 0) +
+          (isSharpnessOk ? 40 : 0) +
+          (isResolutionOk ? 20 : 0)
+        ));
+
+        const isLegible = quality >= 60;
+
+        let message = '';
+        if (!isLegible) {
+          if (!isBrightnessOk) message = 'Imagen muy oscura o muy clara';
+          else if (!isSharpnessOk) message = 'Imagen borrosa o de baja nitidez';
+          else if (!isResolutionOk) message = 'Resolución muy baja';
+        } else {
+          message = 'Calidad aceptable';
+        }
+
+        URL.revokeObjectURL(url);
+        resolve({ isLegible, quality, message });
+      } catch (error) {
+        URL.revokeObjectURL(url);
+        resolve({ isLegible: true, quality: 100, message: 'No se pudo validar' });
+      }
+    };
+
+    img.onerror = () => {
+      URL.revokeObjectURL(url);
+      resolve({ isLegible: false, quality: 0, message: 'Error al cargar imagen' });
+    };
+
+    img.src = url;
+  });
 };
 
 const App = () => {
@@ -121,16 +204,23 @@ const App = () => {
   const [incapacityType, setIncapacityType] = useState(null);
   const [subType, setSubType] = useState(null);
   const [daysOfIncapacity, setDaysOfIncapacity] = useState('');
+  
+  // ACTUALIZADO: Agregado isPhantomVehicle
   const [specificFields, setSpecificFields] = useState({
     births: '',
-    motherWorks: 'No',
+    motherWorks: false,
+    isPhantomVehicle: false,
   });
+  
   const [email, setEmail] = useState('');
   const [phoneNumber, setPhoneNumber] = useState('');
   const [uploadedFiles, setUploadedFiles] = useState({});
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submissionComplete, setSubmissionComplete] = useState(false);
   const [apiError, setApiError] = useState(null);
+  
+  // NUEVO: Estado para validación de archivos
+  const [validatingFiles, setValidatingFiles] = useState({});
 
   const currentTheme = themes[theme];
 
@@ -143,13 +233,14 @@ const App = () => {
     setIncapacityType(null);
     setSubType(null);
     setDaysOfIncapacity('');
-    setSpecificFields({ births: '', motherWorks: 'No' });
+    setSpecificFields({ births: '', motherWorks: false, isPhantomVehicle: false });
     setUploadedFiles({});
     setEmail('');
     setPhoneNumber('');
     setIsSubmitting(false);
     setSubmissionComplete(false);
     setApiError(null);
+    setValidatingFiles({});
   };
 
   const handleCedulaChange = (e) => {
@@ -198,6 +289,7 @@ const App = () => {
     setSubType(null);
     setDaysOfIncapacity('');
     setUploadedFiles({});
+    setSpecificFields({ births: '', motherWorks: false, isPhantomVehicle: false });
     if (type === 'other') {
       setStep(4);
     } else {
@@ -210,24 +302,29 @@ const App = () => {
     setUploadedFiles({});
   };
 
+  // ACTUALIZADO: Incluye isPhantomVehicle en la lógica
   const getRequiredDocs = useMemo(() => {
     if (incapacityType === 'maternity') return documentRequirements.maternity;
     if (incapacityType === 'paternity')
-      return documentRequirements.paternity(specificFields.motherWorks === 'Sí');
+      return documentRequirements.paternity(specificFields.motherWorks);
     if (incapacityType === 'other') {
       if (!subType || !daysOfIncapacity) return [];
       const days = parseInt(daysOfIncapacity, 10);
       if (subType === 'general') return documentRequirements.general(days);
       if (subType === 'labor') return documentRequirements.labor(days);
-      if (subType === 'traffic') return documentRequirements.traffic();
+      if (subType === 'traffic') return documentRequirements.traffic(specificFields.isPhantomVehicle);
     }
     return [];
-  }, [incapacityType, specificFields.motherWorks, subType, daysOfIncapacity]);
+  }, [incapacityType, specificFields.motherWorks, specificFields.isPhantomVehicle, subType, daysOfIncapacity]);
 
+  // ACTUALIZADO: Valida que archivos sean legibles
   const isSubmissionReady = useMemo(() => {
     const requiredDocs = getRequiredDocs;
     if (requiredDocs.length === 0) return false;
-    return requiredDocs.every((docName) => uploadedFiles[docName]);
+    return requiredDocs.every((docName) => {
+      const file = uploadedFiles[docName];
+      return file && file.isLegible;
+    });
   }, [getRequiredDocs, uploadedFiles]);
 
   const handleSubmit = (e) => {
@@ -238,7 +335,6 @@ const App = () => {
     }
   };
 
-  // FUNCIÓN DE ENVÍO REAL DE ARCHIVOS Y DATOS AL BACKEND (CORRECTA)
   const handleFinalSubmit = async (e) => {
     e.preventDefault();
     setIsSubmitting(true);
@@ -250,7 +346,6 @@ const App = () => {
     formData.append('email', email);
     formData.append('telefono', phoneNumber);
 
-    // Enviar todos los archivos con nombre "archivos"
     const archivos = Object.values(uploadedFiles);
     archivos.forEach(file => {
       formData.append('archivos', file);
@@ -258,7 +353,6 @@ const App = () => {
 
     try {
       const backendUrl = process.env.REACT_APP_BACKEND_URL;
-      // Enviar al backend real
       const response = await fetch(`${backendUrl}/subir-incapacidad/`, {
         method: 'POST',
         body: formData,
@@ -296,18 +390,25 @@ const App = () => {
     }
   };
 
+  // ACTUALIZADO: DropzoneArea con validación de calidad
   const DropzoneArea = ({ docName }) => {
     const onDrop = useCallback(
-      (acceptedFiles) => {
+      async (acceptedFiles) => {
         const file = acceptedFiles[0];
         if (file) {
+          setValidatingFiles(prev => ({ ...prev, [docName]: true }));
+
+          const validationResult = await validateImageQuality(file);
+
           setUploadedFiles((prev) => ({
             ...prev,
             [docName]: Object.assign(file, {
               preview: URL.createObjectURL(file),
-              isLegible: true,
+              ...validationResult,
             }),
           }));
+
+          setValidatingFiles(prev => ({ ...prev, [docName]: false }));
         }
       },
       [docName]
@@ -323,19 +424,37 @@ const App = () => {
     });
 
     const file = uploadedFiles[docName];
+    const isValidating = validatingFiles[docName];
 
     return (
       <div className="w-full">
         <label className="block text-sm font-medium mb-1">{docName}</label>
         {file ? (
-          <div
-            className={`p-3 rounded-xl border flex items-center justify-between ${
-              currentTheme.cardBorder
-            } ${file.isLegible ? 'border-green-400' : 'border-red-400'}`}
+          <motion.div
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ duration: 0.2 }}
+            className={`p-3 rounded-xl border-2 flex items-center justify-between transition-all ${
+              file.isLegible 
+                ? 'border-green-400 bg-green-50' 
+                : 'border-red-400 bg-red-50'
+            }`}
           >
-            <div className="flex items-center gap-2 truncate">
-              <FolderOpenIcon className={`h-5 w-5 ${currentTheme.icon}`} />
-              <span className="text-sm truncate">{file.name}</span>
+            <div className="flex items-center gap-2 flex-1 min-w-0">
+              <FolderOpenIcon className={`h-5 w-5 flex-shrink-0 ${file.isLegible ? 'text-green-600' : 'text-red-600'}`} />
+              <div className="flex-1 min-w-0">
+                <span className="text-sm truncate block">{file.name}</span>
+                <div className="flex items-center gap-1 mt-1">
+                  {file.isLegible ? (
+                    <CheckCircleIcon className="h-3 w-3 text-green-600" />
+                  ) : (
+                    <ExclamationTriangleIcon className="h-3 w-3 text-red-600" />
+                  )}
+                  <span className={`text-xs ${file.isLegible ? 'text-green-600' : 'text-red-600'}`}>
+                    {file.message}
+                  </span>
+                </div>
+              </div>
             </div>
             <button
               onClick={() =>
@@ -345,15 +464,15 @@ const App = () => {
                   return newFiles;
                 })
               }
-              className={`p-1 rounded-full ${currentTheme.secondary} hover:bg-red-100`}
+              className="p-1 rounded-full hover:bg-red-100 transition-colors ml-2"
             >
-              <XMarkIcon className="h-4 w-4 text-red-500" />
+              <XMarkIcon className="h-4 w-4 text-red-600" />
             </button>
-          </div>
+          </motion.div>
         ) : (
           <div
             {...getRootProps({
-              className: `p-6 rounded-2xl border-2 border-dashed transition-colors duration-200 ease-in-out cursor-pointer ${
+              className: `p-6 rounded-2xl border-2 border-dashed transition-all duration-300 cursor-pointer ${
                 isDragActive
                   ? currentTheme.dragActive
                   : `${currentTheme.cardBorder} hover:border-blue-500`
@@ -361,10 +480,22 @@ const App = () => {
             })}
           >
             <input {...getInputProps()} />
-            <CloudArrowUpIcon className={`mx-auto h-8 w-8 ${currentTheme.icon}`} />
-            <p className="mt-2 text-xs text-center">
-              Arrastra o haz clic para subir el archivo
-            </p>
+            {isValidating ? (
+              <div className="text-center">
+                <svg className="animate-spin h-8 w-8 mx-auto text-blue-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.965l3-2.674z"></path>
+                </svg>
+                <p className="mt-2 text-xs text-blue-600 font-medium">Validando calidad...</p>
+              </div>
+            ) : (
+              <>
+                <CloudArrowUpIcon className={`mx-auto h-8 w-8 ${currentTheme.icon}`} />
+                <p className="mt-2 text-xs text-center">
+                  Arrastra o haz clic para subir el archivo
+                </p>
+              </>
+            )}
           </div>
         )}
       </div>
@@ -393,6 +524,7 @@ const App = () => {
     );
   };
 
+  // ACTUALIZADO: Campos específicos con vehículo fantasma
   const renderSpecificFields = () => {
     const fieldsToRender = [];
 
@@ -416,41 +548,98 @@ const App = () => {
 
       if (incapacityType === 'paternity') {
         fieldsToRender.push(
-          <div key="mother-works">
+          <div key="mother-works" className="space-y-2">
             <label className="block text-sm font-medium">
-              ¿La madre del hijo se encuentra laborando actualmente?
+              ¿La madre se encuentra laborando actualmente?
             </label>
-            <div className="mt-2 flex items-center gap-4">
-              <label className="flex items-center gap-2">
+            <div className="flex items-center gap-4">
+              <label className="flex items-center gap-2 cursor-pointer">
                 <input
                   type="radio"
                   name="motherWorks"
-                  value="Sí"
-                  checked={specificFields.motherWorks === 'Sí'}
-                  onChange={(e) =>
-                    setSpecificFields({ ...specificFields, motherWorks: e.target.value })
+                  checked={specificFields.motherWorks === true}
+                  onChange={() =>
+                    setSpecificFields({ ...specificFields, motherWorks: true })
                   }
                   className="form-radio"
                 />
                 <span className="text-sm">Sí</span>
               </label>
-              <label className="flex items-center gap-2">
+              <label className="flex items-center gap-2 cursor-pointer">
                 <input
                   type="radio"
                   name="motherWorks"
-                  value="No"
-                  checked={specificFields.motherWorks === 'No'}
-                  onChange={(e) =>
-                    setSpecificFields({ ...specificFields, motherWorks: e.target.value })
+                  checked={specificFields.motherWorks === false}
+                  onChange={() =>
+                    setSpecificFields({ ...specificFields, motherWorks: false })
                   }
                   className="form-radio"
                 />
                 <span className="text-sm">No</span>
               </label>
             </div>
+            {specificFields.motherWorks !== null && (
+              <motion.p
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                className="text-xs text-blue-600 mt-1"
+              >
+                {specificFields.motherWorks 
+                  ? '✓ Se requerirá licencia de maternidad'
+                  : '✓ No se requiere licencia de maternidad'}
+              </motion.p>
+            )}
           </div>
         );
       }
+    }
+
+    // NUEVO: Campo para vehículo fantasma
+    if (incapacityType === 'other' && subType === 'traffic') {
+      fieldsToRender.push(
+        <div key="phantom-vehicle" className="space-y-2">
+          <label className="block text-sm font-medium">
+            ¿El vehículo relacionado al accidente es fantasma?
+          </label>
+          <div className="flex items-center gap-4">
+            <label className="flex items-center gap-2 cursor-pointer">
+              <input
+                type="radio"
+                name="isPhantomVehicle"
+                checked={specificFields.isPhantomVehicle === true}
+                onChange={() =>
+                  setSpecificFields({ ...specificFields, isPhantomVehicle: true })
+                }
+                className="form-radio"
+              />
+              <span className="text-sm">Sí</span>
+            </label>
+            <label className="flex items-center gap-2 cursor-pointer">
+              <input
+                type="radio"
+                name="isPhantomVehicle"
+                checked={specificFields.isPhantomVehicle === false}
+                onChange={() =>
+                  setSpecificFields({ ...specificFields, isPhantomVehicle: false })
+                }
+                className="form-radio"
+              />
+              <span className="text-sm">No</span>
+            </label>
+          </div>
+          {specificFields.isPhantomVehicle !== null && (
+            <motion.p
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              className="text-xs text-amber-600 mt-1"
+            >
+              {specificFields.isPhantomVehicle 
+                ? '✓ No se requiere SOAT'
+                : '✓ Se requerirá adjuntar SOAT'}
+            </motion.p>
+          )}
+        </div>
+      );
     }
 
     if (incapacityType === 'other' && subType) {
@@ -494,6 +683,7 @@ const App = () => {
             initial={{ opacity: 0, y: -50 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -50 }}
+            transition={{ duration: 0.3 }}
             className={`fixed top-4 left-1/2 -translate-x-1/2 max-w-sm w-full p-4 rounded-xl shadow-lg ${currentTheme.error} flex items-center gap-3 z-50`}
           >
             <ExclamationCircleIcon className="h-6 w-6" />
@@ -502,15 +692,7 @@ const App = () => {
               onClick={() => setApiError(null)}
               className="ml-auto p-1 rounded-full hover:bg-white/20 transition-colors"
             >
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                className="h-4 w-4"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-              >
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-              </svg>
+              <XMarkIcon className="h-4 w-4" />
             </button>
           </motion.div>
         </AnimatePresence>
@@ -520,7 +702,7 @@ const App = () => {
         <select
           value={theme}
           onChange={(e) => setTheme(e.target.value)}
-          className={`p-2 rounded-xl border-0 shadow-sm sm:text-sm ${currentTheme.input}`}
+          className={`p-2 rounded-xl border-0 shadow-sm sm:text-sm transition-all ${currentTheme.input}`}
         >
           <option value="light">Claro</option>
           <option value="dark">Oscuro</option>
@@ -699,8 +881,8 @@ const App = () => {
                 </button>
                 <button
                   onClick={() => setStep(5)}
-                  disabled={!subType || !daysOfIncapacity || (incapacityType === 'maternity' && !specificFields.births) || (incapacityType === 'paternity' && !specificFields.births)}
-                  className={`w-full p-3 rounded-xl font-bold transition-colors duration-200 ${currentTheme.button} ${(!subType || !daysOfIncapacity || (incapacityType === 'maternity' && !specificFields.births) || (incapacityType === 'paternity' && !specificFields.births)) ? 'opacity-50 cursor-not-allowed' : ''}`}
+                  disabled={!subType || !daysOfIncapacity}
+                  className={`w-full p-3 rounded-xl font-bold transition-colors duration-200 ${currentTheme.button} ${(!subType || !daysOfIncapacity) ? 'opacity-50 cursor-not-allowed' : ''}`}
                 >
                   Siguiente
                 </button>
