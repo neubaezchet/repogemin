@@ -18,7 +18,7 @@ import {
   ExclamationTriangleIcon,
 } from '@heroicons/react/24/solid';
 
-// Temas (sin cambios)
+// Temas
 const themes = {
   light: {
     bg: 'bg-gray-50 text-gray-900',
@@ -79,7 +79,7 @@ const themes = {
   },
 };
 
-// ACTUALIZADO: Documentos requeridos con lógica de vehículo fantasma
+// Documentos requeridos
 const documentRequirements = {
   maternity: [
     'Licencia o incapacidad de maternidad',
@@ -119,7 +119,7 @@ const documentRequirements = {
   },
 };
 
-// NUEVO: Función de validación de calidad de imagen (frontend)
+// Validación de calidad de imagen
 const validateImageQuality = async (file) => {
   return new Promise((resolve) => {
     if (file.type === 'application/pdf') {
@@ -205,11 +205,10 @@ const App = () => {
   const [subType, setSubType] = useState(null);
   const [daysOfIncapacity, setDaysOfIncapacity] = useState('');
   
-  // ACTUALIZADO: Agregado isPhantomVehicle
   const [specificFields, setSpecificFields] = useState({
     births: '',
-    motherWorks: false,
-    isPhantomVehicle: false,
+    motherWorks: null,
+    isPhantomVehicle: null,
   });
   
   const [email, setEmail] = useState('');
@@ -218,8 +217,6 @@ const App = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submissionComplete, setSubmissionComplete] = useState(false);
   const [apiError, setApiError] = useState(null);
-  
-  // NUEVO: Estado para validación de archivos
   const [validatingFiles, setValidatingFiles] = useState({});
 
   const currentTheme = themes[theme];
@@ -233,7 +230,7 @@ const App = () => {
     setIncapacityType(null);
     setSubType(null);
     setDaysOfIncapacity('');
-    setSpecificFields({ births: '', motherWorks: false, isPhantomVehicle: false });
+    setSpecificFields({ births: '', motherWorks: null, isPhantomVehicle: null });
     setUploadedFiles({});
     setEmail('');
     setPhoneNumber('');
@@ -284,25 +281,22 @@ const App = () => {
     }
   };
 
+  // CAMBIO PRINCIPAL: Todos los tipos van al paso 4
   const handleIncapacityType = (type) => {
     setIncapacityType(type);
     setSubType(null);
     setDaysOfIncapacity('');
     setUploadedFiles({});
-    setSpecificFields({ births: '', motherWorks: false, isPhantomVehicle: false });
-    if (type === 'other') {
-      setStep(4);
-    } else {
-      setStep(5);
-    }
+    setSpecificFields({ births: '', motherWorks: null, isPhantomVehicle: null });
+    setStep(4); // TODOS van al paso 4 ahora
   };
 
   const handleSubTypeChange = (e) => {
     setSubType(e.target.value);
     setUploadedFiles({});
+    setSpecificFields({ ...specificFields, isPhantomVehicle: null });
   };
 
-  // ACTUALIZADO: Incluye isPhantomVehicle en la lógica
   const getRequiredDocs = useMemo(() => {
     if (incapacityType === 'maternity') return documentRequirements.maternity;
     if (incapacityType === 'paternity')
@@ -317,7 +311,6 @@ const App = () => {
     return [];
   }, [incapacityType, specificFields.motherWorks, specificFields.isPhantomVehicle, subType, daysOfIncapacity]);
 
-  // ACTUALIZADO: Valida que archivos sean legibles
   const isSubmissionReady = useMemo(() => {
     const requiredDocs = getRequiredDocs;
     if (requiredDocs.length === 0) return false;
@@ -380,7 +373,7 @@ const App = () => {
       case 3:
         return 'Selecciona el tipo de incapacidad';
       case 4:
-        return 'Detalla el tipo de incapacidad';
+        return 'Detalla la información';
       case 5:
         return 'Sube los documentos requeridos';
       case 6:
@@ -390,7 +383,6 @@ const App = () => {
     }
   };
 
-  // ACTUALIZADO: DropzoneArea con validación de calidad
   const DropzoneArea = ({ docName }) => {
     const onDrop = useCallback(
       async (acceptedFiles) => {
@@ -524,10 +516,29 @@ const App = () => {
     );
   };
 
-  // ACTUALIZADO: Campos específicos con vehículo fantasma
+  // Validación de campos del paso 4
+  const isStep4Valid = () => {
+    if (incapacityType === 'maternity') {
+      return specificFields.births !== '';
+    }
+    if (incapacityType === 'paternity') {
+      return specificFields.births !== '' && specificFields.motherWorks !== null;
+    }
+    if (incapacityType === 'other') {
+      if (!subType || !daysOfIncapacity) return false;
+      if (subType === 'traffic') {
+        return specificFields.isPhantomVehicle !== null;
+      }
+      return true;
+    }
+    return false;
+  };
+
+  // Campos específicos según el tipo
   const renderSpecificFields = () => {
     const fieldsToRender = [];
 
+    // MATERNIDAD Y PATERNIDAD
     if (incapacityType === 'maternity' || incapacityType === 'paternity') {
       fieldsToRender.push(
         <div key="births">
@@ -542,10 +553,12 @@ const App = () => {
               setSpecificFields({ ...specificFields, births: e.target.value })
             }
             className={`mt-1 block w-full rounded-xl border-0 p-3 shadow-sm focus:ring-2 sm:text-sm transition-colors ${currentTheme.input}`}
+            placeholder="Ej: 1"
           />
         </div>
       );
 
+      // Solo para PATERNIDAD
       if (incapacityType === 'paternity') {
         fieldsToRender.push(
           <div key="mother-works" className="space-y-2">
@@ -594,69 +607,92 @@ const App = () => {
       }
     }
 
-    // NUEVO: Campo para vehículo fantasma
-    if (incapacityType === 'other' && subType === 'traffic') {
+    // OTRO TIPO
+    if (incapacityType === 'other') {
       fieldsToRender.push(
-        <div key="phantom-vehicle" className="space-y-2">
-          <label className="block text-sm font-medium">
-            ¿El vehículo relacionado al accidente es fantasma?
+        <div key="subtype">
+          <label htmlFor="subType" className="block text-sm font-medium mb-1">
+            Selecciona la causa
           </label>
-          <div className="flex items-center gap-4">
-            <label className="flex items-center gap-2 cursor-pointer">
-              <input
-                type="radio"
-                name="isPhantomVehicle"
-                checked={specificFields.isPhantomVehicle === true}
-                onChange={() =>
-                  setSpecificFields({ ...specificFields, isPhantomVehicle: true })
-                }
-                className="form-radio"
-              />
-              <span className="text-sm">Sí</span>
-            </label>
-            <label className="flex items-center gap-2 cursor-pointer">
-              <input
-                type="radio"
-                name="isPhantomVehicle"
-                checked={specificFields.isPhantomVehicle === false}
-                onChange={() =>
-                  setSpecificFields({ ...specificFields, isPhantomVehicle: false })
-                }
-                className="form-radio"
-              />
-              <span className="text-sm">No</span>
-            </label>
-          </div>
-          {specificFields.isPhantomVehicle !== null && (
-            <motion.p
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              className="text-xs text-amber-600 mt-1"
-            >
-              {specificFields.isPhantomVehicle 
-                ? '✓ No se requiere SOAT'
-                : '✓ Se requerirá adjuntar SOAT'}
-            </motion.p>
-          )}
-        </div>
-      );
-    }
-
-    if (incapacityType === 'other' && subType) {
-      fieldsToRender.push(
-        <div key="days">
-          <label htmlFor="days" className="block text-sm font-medium">
-            Días de la incapacidad
-          </label>
-          <input
-            type="number"
-            id="days"
-            value={daysOfIncapacity}
-            onChange={(e) => setDaysOfIncapacity(e.target.value)}
+          <select
+            id="subType"
+            value={subType || ''}
+            onChange={handleSubTypeChange}
             className={`mt-1 block w-full rounded-xl border-0 p-3 shadow-sm focus:ring-2 sm:text-sm transition-colors ${currentTheme.input}`}
-          />
+          >
+            <option value="" disabled>Selecciona una opción</option>
+            <option value="general">Enfermedad general o especial</option>
+            <option value="traffic">Accidente de tránsito</option>
+            <option value="labor">Accidente laboral o enfermedad laboral</option>
+          </select>
         </div>
       );
+
+      if (subType) {
+        fieldsToRender.push(
+          <div key="days">
+            <label htmlFor="days" className="block text-sm font-medium">
+              Días de la incapacidad
+            </label>
+            <input
+              type="number"
+              id="days"
+              value={daysOfIncapacity}
+              onChange={(e) => setDaysOfIncapacity(e.target.value)}
+              className={`mt-1 block w-full rounded-xl border-0 p-3 shadow-sm focus:ring-2 sm:text-sm transition-colors ${currentTheme.input}`}
+              placeholder="Ej: 5"
+            />
+          </div>
+        );
+      }
+
+      // Campo para vehículo fantasma
+      if (subType === 'traffic') {
+        fieldsToRender.push(
+          <div key="phantom-vehicle" className="space-y-2">
+            <label className="block text-sm font-medium">
+              ¿El vehículo relacionado al accidente es fantasma o se dio a la fuga?
+            </label>
+            <div className="flex items-center gap-4">
+              <label className="flex items-center gap-2 cursor-pointer">
+                <input
+                  type="radio"
+                  name="isPhantomVehicle"
+                  checked={specificFields.isPhantomVehicle === true}
+                  onChange={() =>
+                    setSpecificFields({ ...specificFields, isPhantomVehicle: true })
+                  }
+                  className="form-radio"
+                />
+                <span className="text-sm">Sí</span>
+              </label>
+              <label className="flex items-center gap-2 cursor-pointer">
+                <input
+                  type="radio"
+                  name="isPhantomVehicle"
+                  checked={specificFields.isPhantomVehicle === false}
+                  onChange={() =>
+                    setSpecificFields({ ...specificFields, isPhantomVehicle: false })
+                  }
+                  className="form-radio"
+                />
+                <span className="text-sm">No</span>
+              </label>
+            </div>
+            {specificFields.isPhantomVehicle !== null && (
+              <motion.p
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                className="text-xs text-amber-600 mt-1"
+              >
+                {specificFields.isPhantomVehicle 
+                  ? '✓ No se requiere SOAT'
+                  : '✓ Se requerirá adjuntar SOAT'}
+              </motion.p>
+            )}
+          </div>
+        );
+      }
     }
 
     if (fieldsToRender.length === 0) return null;
@@ -666,7 +702,7 @@ const App = () => {
         initial={{ opacity: 0, y: 10 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.3 }}
-        className="mt-6 space-y-4"
+        className="space-y-4"
       >
         {fieldsToRender}
       </motion.div>
@@ -850,26 +886,10 @@ const App = () => {
               className="space-y-4"
             >
               <div className="flex justify-between items-center">
-                <h2 className="text-xl font-bold">Detalles de la incapacidad</h2>
+                <h2 className="text-xl font-bold">Detalla la información</h2>
                 <button onClick={() => setStep(3)} className={`p-2 rounded-full ${currentTheme.buttonOutline}`}>
                   <ChevronLeftIcon className="h-5 w-5" />
                 </button>
-              </div>
-              <div>
-                <label htmlFor="subType" className="block text-sm font-medium mb-1">
-                  Selecciona la causa
-                </label>
-                <select
-                  id="subType"
-                  value={subType || ''}
-                  onChange={handleSubTypeChange}
-                  className={`mt-1 block w-full rounded-xl border-0 p-3 shadow-sm focus:ring-2 sm:text-sm transition-colors ${currentTheme.input}`}
-                >
-                  <option value="" disabled>Selecciona una opción</option>
-                  <option value="general">Enfermedad general o especial</option>
-                  <option value="traffic">Accidente de tránsito</option>
-                  <option value="labor">Accidente laboral o enfermedad laboral</option>
-                </select>
               </div>
               {renderSpecificFields()}
               <div className="flex gap-4 mt-8">
@@ -881,8 +901,8 @@ const App = () => {
                 </button>
                 <button
                   onClick={() => setStep(5)}
-                  disabled={!subType || !daysOfIncapacity}
-                  className={`w-full p-3 rounded-xl font-bold transition-colors duration-200 ${currentTheme.button} ${(!subType || !daysOfIncapacity) ? 'opacity-50 cursor-not-allowed' : ''}`}
+                  disabled={!isStep4Valid()}
+                  className={`w-full p-3 rounded-xl font-bold transition-colors duration-200 ${currentTheme.button} ${!isStep4Valid() ? 'opacity-50 cursor-not-allowed' : ''}`}
                 >
                   Siguiente
                 </button>
@@ -901,14 +921,14 @@ const App = () => {
             >
               <div className="flex justify-between items-center">
                 <h2 className="text-xl font-bold">Documentos requeridos</h2>
-                <button onClick={() => setStep(incapacityType === 'other' ? 4 : 3)} className={`p-2 rounded-full ${currentTheme.buttonOutline}`}>
+                <button onClick={() => setStep(4)} className={`p-2 rounded-full ${currentTheme.buttonOutline}`}>
                   <ChevronLeftIcon className="h-5 w-5" />
                 </button>
               </div>
               <DocumentsUploadSection />
               <div className="flex gap-4 mt-8">
                 <button
-                  onClick={() => setStep(incapacityType === 'other' ? 4 : 3)}
+                  onClick={() => setStep(4)}
                   className={`w-full p-3 rounded-xl font-bold border transition-colors ${currentTheme.buttonOutline}`}
                 >
                   Atrás
