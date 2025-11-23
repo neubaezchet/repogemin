@@ -1,4 +1,6 @@
 import { useState, useMemo, useCallback } from 'react';
+import { validarCalidadArchivo } from './utils/validadorCalidad';
+import ToastGuiaFotos from './components/ToastGuiaFotos';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useDropzone } from 'react-dropzone';
 import {
@@ -121,77 +123,15 @@ const documentRequirements = {
 
 // Validación de calidad de imagen
 const validateImageQuality = async (file) => {
-  return new Promise((resolve) => {
-    if (file.type === 'application/pdf') {
-      resolve({ isLegible: true, quality: 100, message: 'PDF aceptado' });
-      return;
-    }
-
-    const img = new Image();
-    const url = URL.createObjectURL(file);
-
-    img.onload = () => {
-      const canvas = document.createElement('canvas');
-      const ctx = canvas.getContext('2d');
-      
-      canvas.width = img.width;
-      canvas.height = img.height;
-      ctx.drawImage(img, 0, 0);
-
-      try {
-        const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
-        const data = imageData.data;
-
-        let brightness = 0;
-        for (let i = 0; i < data.length; i += 4) {
-          brightness += (data[i] + data[i + 1] + data[i + 2]) / 3;
-        }
-        brightness = brightness / (data.length / 4);
-
-        let edgeCount = 0;
-        for (let i = 0; i < data.length - 4; i += 4) {
-          const diff = Math.abs(data[i] - data[i + 4]);
-          if (diff > 30) edgeCount++;
-        }
-        const sharpness = (edgeCount / (data.length / 4)) * 100;
-
-        const minResolution = 300 * 300;
-        const isBrightnessOk = brightness > 30 && brightness < 240;
-        const isSharpnessOk = sharpness > 0.5;
-        const isResolutionOk = (img.width * img.height) > minResolution;
-
-        const quality = Math.min(100, (
-          (isBrightnessOk ? 40 : 0) +
-          (isSharpnessOk ? 40 : 0) +
-          (isResolutionOk ? 20 : 0)
-        ));
-
-        const isLegible = quality >= 60;
-
-        let message = '';
-        if (!isLegible) {
-          if (!isBrightnessOk) message = 'Imagen muy oscura o muy clara';
-          else if (!isSharpnessOk) message = 'Imagen borrosa o de baja nitidez';
-          else if (!isResolutionOk) message = 'Resolución muy baja';
-        } else {
-          message = 'Calidad aceptable';
-        }
-
-        URL.revokeObjectURL(url);
-        resolve({ isLegible, quality, message });
-      } catch (error) {
-        URL.revokeObjectURL(url);
-        resolve({ isLegible: true, quality: 100, message: 'No se pudo validar' });
-      }
-    };
-
-    img.onerror = () => {
-      URL.revokeObjectURL(url);
-      resolve({ isLegible: false, quality: 0, message: 'Error al cargar imagen' });
-    };
-
-    img.src = url;
-  });
+  const resultado = await validarCalidadArchivo(file);
+  
+  return {
+    isLegible: resultado.esValido,
+    quality: resultado.esValido ? 100 : 30,
+    message: resultado.problemas.length > 0 
+      ? resultado.problemas[0] 
+      : 'Calidad aceptable'
+  };
 };
 
 const App = () => {
@@ -218,6 +158,7 @@ const App = () => {
   const [submissionComplete, setSubmissionComplete] = useState(false);
   const [apiError, setApiError] = useState(null);
   const [validatingFiles, setValidatingFiles] = useState({});
+  const [mostrarGuiaFotos, setMostrarGuiaFotos] = useState(false);
 
   const currentTheme = themes[theme];
 
@@ -288,7 +229,8 @@ const App = () => {
     setDaysOfIncapacity('');
     setUploadedFiles({});
     setSpecificFields({ births: '', motherWorks: null, isPhantomVehicle: null });
-    setStep(4); // TODOS van al paso 4 ahora
+    setMostrarGuiaFotos(true);
+    setStep(4);
   };
 
   const handleSubTypeChange = (e) => {
