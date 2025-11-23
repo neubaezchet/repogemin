@@ -1,5 +1,10 @@
 import React, { useState, useEffect } from 'react';
-import { X, CheckCircle, AlertTriangle, Camera } from 'lucide-react';
+import { 
+  XMarkIcon, 
+  CheckCircleIcon, 
+  ExclamationTriangleIcon, 
+  CameraIcon 
+} from '@heroicons/react/24/solid';
 
 /**
  * Toast flotante con guía visual
@@ -31,14 +36,14 @@ const ToastGuiaFotos = ({ visible, onClose }) => {
         {/* Header */}
         <div className="bg-gradient-to-r from-blue-600 to-blue-700 px-6 py-4 flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <Camera className="w-6 h-6 text-white" />
+            <CameraIcon className="w-6 h-6 text-white" />
             <h3 className="text-white font-bold text-lg">Guía para Fotos</h3>
           </div>
           <button
             onClick={handleClose}
             className="text-white hover:bg-white/20 rounded-full p-1 transition-colors"
           >
-            <X className="w-5 h-5" />
+            <XMarkIcon className="w-5 h-5" />
           </button>
         </div>
 
@@ -50,7 +55,7 @@ const ToastGuiaFotos = ({ visible, onClose }) => {
               {/* Documento CORRECTO */}
               <div className="border-4 border-green-500 rounded-lg bg-white p-3">
                 <div className="flex items-center justify-center mb-2">
-                  <CheckCircle className="w-6 h-6 text-green-600 mr-2" />
+                  <CheckCircleIcon className="w-6 h-6 text-green-600 mr-2" />
                   <span className="font-bold text-green-700 text-sm">CORRECTO</span>
                 </div>
                 <svg className="w-full h-24" viewBox="0 0 200 80" xmlns="http://www.w3.org/2000/svg">
@@ -72,7 +77,7 @@ const ToastGuiaFotos = ({ visible, onClose }) => {
               {/* Documento INCORRECTO */}
               <div className="border-4 border-red-500 rounded-lg bg-white p-3">
                 <div className="flex items-center justify-center mb-2">
-                  <AlertTriangle className="w-6 h-6 text-red-600 mr-2" />
+                  <ExclamationTriangleIcon className="w-6 h-6 text-red-600 mr-2" />
                   <span className="font-bold text-red-700 text-sm">INCORRECTO</span>
                 </div>
                 <svg className="w-full h-24" viewBox="0 0 200 80" xmlns="http://www.w3.org/2000/svg">
@@ -115,7 +120,7 @@ const ToastGuiaFotos = ({ visible, onClose }) => {
           {/* Advertencias */}
           <div className="bg-amber-50 border-2 border-amber-300 rounded-lg p-3">
             <div className="flex items-center gap-2 mb-2">
-              <AlertTriangle className="w-5 h-5 text-amber-700" />
+              <ExclamationTriangleIcon className="w-5 h-5 text-amber-700" />
               <span className="font-bold text-amber-900 text-sm">Evita:</span>
             </div>
             <ul className="text-xs text-amber-800 space-y-1 ml-7">
