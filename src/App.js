@@ -159,6 +159,10 @@ const App = () => {
   const [apiError, setApiError] = useState(null);
   const [validatingFiles, setValidatingFiles] = useState({});
   const [mostrarGuiaFotos, setMostrarGuiaFotos] = useState(false);
+  
+  // ✅ NUEVOS ESTADOS PARA BLOQUEO
+  const [bloqueo, setBloqueo] = useState(null);
+  const [modoReenvio, setModoReenvio] = useState(false);
 
   const currentTheme = themes[theme];
 
@@ -179,6 +183,8 @@ const App = () => {
     setSubmissionComplete(false);
     setApiError(null);
     setValidatingFiles({});
+    setBloqueo(null);
+    setModoReenvio(false);
   };
 
   const handleCedulaChange = (e) => {
@@ -197,15 +203,29 @@ const App = () => {
 
     try {
       const backendUrl = process.env.REACT_APP_BACKEND_URL;
-      const response = await fetch(`${backendUrl}/empleados/${cedula}`);
-      const data = await response.json();
+      
+      // PASO 1: Validar empleado
+      const responseEmpleado = await fetch(`${backendUrl}/empleados/${cedula}`);
+      const dataEmpleado = await responseEmpleado.json();
 
-      if (response.ok) {
-        setUserName(data.nombre);
-        setUserCompany(data.empresa);
-        setStep(2);
+      if (responseEmpleado.ok) {
+        setUserName(dataEmpleado.nombre);
+        setUserCompany(dataEmpleado.empresa);
+        
+        // PASO 2: ✅ VERIFICAR BLOQUEO
+        const responseBloqueo = await fetch(`${backendUrl}/verificar-bloqueo/${cedula}`);
+        const dataBloqueo = await responseBloqueo.json();
+        
+        if (dataBloqueo.bloqueado) {
+          // Hay caso bloqueante → Ir a pantalla de bloqueo
+          setBloqueo(dataBloqueo.caso_pendiente);
+          setStep(2.5); // Nuevo paso intermedio
+        } else {
+          // No hay bloqueo → Flujo normal
+          setStep(2);
+        }
       } else {
-        setApiError(data.error || 'Error al validar la cédula. Inténtalo de nuevo.');
+        setApiError(dataEmpleado.error || 'Error al validar la cédula. Inténtalo de nuevo.');
       }
     } catch (error) {
       setApiError('Error de conexión. Inténtalo de nuevo.');
@@ -220,6 +240,54 @@ const App = () => {
     } else {
       resetApp();
     }
+  };
+
+  // ✅ NUEVA FUNCIÓN: Iniciar modo reenvío
+  const handleIniciarReenvio = () => {
+    setModoReenvio(true);
+    
+    // Prellenar tipo de incapacidad del caso bloqueante
+    const tipoBloqueante = bloqueo.tipo.toLowerCase();
+    if (tipoBloqueante.includes('maternidad') || tipoBloqueante === 'maternity') {
+      setIncapacityType('maternity');
+    } else if (tipoBloqueante.includes('paternidad') || tipoBloqueante === 'paternity') {
+      setIncapacityType('paternity');
+    } else {
+      setIncapacityType('other');
+      // Intentar detectar subtipo
+      if (tipoBloqueante.includes('general')) {
+        setSubType('general');
+      } else if (tipoBloqueante.includes('tránsito') || tipoBloqueante.includes('traffic')) {
+        setSubType('traffic');
+      } else if (tipoBloqueante.includes('laboral') || tipoBloqueante.includes('labor')) {
+        setSubType('labor');
+      }
+    }
+    
+    // Saltar directo a subida de archivos
+    setStep(5);
+  };
+
+  // ✅ NUEVA FUNCIÓN: Formatear checks para mostrar legible
+  const formatearCheck = (check) => {
+    const nombres = {
+      'incapacidad_faltante': 'Soporte de incapacidad',
+      'epicrisis_faltante': 'Epicrisis o resumen clínico',
+      'epicrisis_incompleta': 'Epicrisis incompleta',
+      'soat_faltante': 'SOAT del vehículo',
+      'furips_faltante': 'FURIPS',
+      'licencia_maternidad_faltante': 'Licencia de maternidad',
+      'registro_civil_faltante': 'Registro civil del bebé',
+      'nacido_vivo_faltante': 'Certificado de nacido vivo',
+      'cedula_padre_faltante': 'Cédula del padre (ambas caras)',
+      'ilegible_recortada': 'Documento recortado',
+      'ilegible_borrosa': 'Documento borroso',
+      'ilegible_manchada': 'Documento con manchas o reflejos',
+      'incompleta_general': 'Soportes incompletos',
+      'ilegible_general': 'Problemas de calidad',
+      'faltante_general': 'Documentos faltantes'
+    };
+    return nombres[check] || check.replace(/_/g, ' ');
   };
 
   // CAMBIO PRINCIPAL: Todos los tipos van al paso 4
@@ -274,21 +342,56 @@ const App = () => {
     e.preventDefault();
     setIsSubmitting(true);
 
+    const backendUrl = process.env.REACT_APP_BACKEND_URL;
+    let endpoint;
     const formData = new FormData();
-    formData.append('cedula', cedula);
-    formData.append('empresa', userCompany);
-    formData.append('tipo', incapacityType || subType || 'general');
-    formData.append('email', email);
-    formData.append('telefono', phoneNumber);
 
-    const archivos = Object.values(uploadedFiles);
-    archivos.forEach(file => {
-      formData.append('archivos', file);
-    });
+    if (modoReenvio) {
+      // ✅ MODO REENVÍO: Solo archivos
+      endpoint = `${backendUrl}/casos/${bloqueo.serial}/completar`;
+      
+      const archivos = Object.values(uploadedFiles);
+      archivos.forEach(file => {
+        formData.append('archivos', file);
+      });
+      
+      console.log(`🔄 Modo reenvío activado para caso ${bloqueo.serial}`);
+      
+    } else {
+      // ✅ MODO NORMAL: Todos los datos
+      endpoint = `${backendUrl}/subir-incapacidad/`;
+      
+      formData.append('cedula', cedula);
+      formData.append('empresa', userCompany);
+      formData.append('tipo', incapacityType || subType || 'general');
+      formData.append('email', email);
+      formData.append('telefono', phoneNumber);
+      
+      // Agregar campos específicos si existen
+      if (specificFields.births) {
+        formData.append('births', specificFields.births);
+      }
+      if (specificFields.motherWorks !== null) {
+        formData.append('motherWorks', specificFields.motherWorks);
+      }
+      if (specificFields.isPhantomVehicle !== null) {
+        formData.append('isPhantomVehicle', specificFields.isPhantomVehicle);
+      }
+      if (daysOfIncapacity) {
+        formData.append('daysOfIncapacity', daysOfIncapacity);
+      }
+      if (subType) {
+        formData.append('subType', subType);
+      }
+      
+      const archivos = Object.values(uploadedFiles);
+      archivos.forEach(file => {
+        formData.append('archivos', file);
+      });
+    }
 
     try {
-      const backendUrl = process.env.REACT_APP_BACKEND_URL;
-      const response = await fetch(`${backendUrl}/subir-incapacidad/`, {
+      const response = await fetch(endpoint, {
         method: 'POST',
         body: formData,
       });
@@ -301,6 +404,7 @@ const App = () => {
       }
     } catch (error) {
       setApiError('Error de conexión. Inténtalo de nuevo.');
+      console.error('Error:', error);
     } finally {
       setIsSubmitting(false);
     }
@@ -312,12 +416,14 @@ const App = () => {
         return 'Ingresa tu número de cédula';
       case 2:
         return 'Confirma tu identidad';
+      case 2.5:
+        return 'Incapacidad Pendiente';
       case 3:
         return 'Selecciona el tipo de incapacidad';
       case 4:
         return 'Detalla la información';
       case 5:
-        return 'Sube los documentos requeridos';
+        return modoReenvio ? 'Completa los documentos faltantes' : 'Sube los documentos requeridos';
       case 6:
         return 'Confirma tu información de contacto';
       default:
@@ -741,6 +847,112 @@ const App = () => {
             </motion.div>
           )}
 
+          {step === 2.5 && bloqueo && (
+            <motion.div
+              key="step2.5"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -20 }}
+              transition={{ duration: 0.2 }}
+              className="space-y-4"
+            >
+              {/* Alerta de bloqueo */}
+              <div className="bg-amber-50 border-2 border-amber-400 rounded-xl p-6">
+                <ExclamationTriangleIcon className="h-16 w-16 text-amber-600 mx-auto mb-4" />
+                <h3 className="text-xl font-bold text-center mb-2">
+                  Incapacidad Pendiente de Completar
+                </h3>
+                <p className="text-sm text-center text-amber-700 mb-4">
+                  {bloqueo.mensaje}
+                </p>
+                
+                {/* Información del caso */}
+                <div className="bg-white rounded-lg p-4 mt-4 space-y-2">
+                  <div className="flex justify-between">
+                    <span className="font-medium text-gray-600">Serial:</span>
+                    <span className="font-bold text-gray-900">{bloqueo.serial}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="font-medium text-gray-600">Tipo:</span>
+                    <span className="text-gray-900">{bloqueo.tipo}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="font-medium text-gray-600">Estado:</span>
+                    <span className={`px-2 py-1 rounded-full text-xs font-medium ${
+                      bloqueo.estado === 'INCOMPLETA' ? 'bg-red-100 text-red-800' :
+                      bloqueo.estado === 'ILEGIBLE' ? 'bg-amber-100 text-amber-800' :
+                      'bg-gray-100 text-gray-800'
+                    }`}>
+                      {bloqueo.estado}
+                    </span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="font-medium text-gray-600">Fecha de envío:</span>
+                    <span className="text-gray-900">{bloqueo.fecha_envio}</span>
+                  </div>
+                </div>
+                
+                {/* Motivo */}
+                {bloqueo.motivo && (
+                  <div className="bg-red-50 border border-red-200 rounded-lg p-4 mt-4">
+                    <h4 className="font-bold text-red-900 mb-2 flex items-center gap-2">
+                      <ExclamationCircleIcon className="h-5 w-5" />
+                      Motivo:
+                    </h4>
+                    <p className="text-sm text-red-800">{bloqueo.motivo}</p>
+                  </div>
+                )}
+                
+                {/* Documentos faltantes */}
+                {bloqueo.checks_faltantes && bloqueo.checks_faltantes.length > 0 && (
+                  <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mt-4">
+                    <h4 className="font-bold text-blue-900 mb-2 flex items-center gap-2">
+                      <ClipboardDocumentListIcon className="h-5 w-5" />
+                      Documentos que faltan:
+                    </h4>
+                    <ul className="space-y-1">
+                      {bloqueo.checks_faltantes.map((check, idx) => (
+                        <li key={idx} className="text-sm text-blue-800 flex items-start gap-2">
+                          <span className="text-blue-600 mt-0.5">•</span>
+                          <span>{formatearCheck(check)}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+                
+                {/* Instrucciones */}
+                <div className="bg-green-50 border border-green-200 rounded-lg p-4 mt-4">
+                  <h4 className="font-bold text-green-900 mb-2">📝 Qué debes hacer:</h4>
+                  <ol className="list-decimal list-inside space-y-1 text-sm text-green-800">
+                    <li>Revisa los problemas indicados arriba</li>
+                    <li>Consigue o corrige los documentos que faltan</li>
+                    <li>Haz clic en "Completar esta Incapacidad"</li>
+                    <li>Sube TODOS los documentos juntos</li>
+                  </ol>
+                </div>
+                
+                {/* Botones de acción */}
+                <div className="flex flex-col gap-3 mt-6">
+                  <button
+                    onClick={handleIniciarReenvio}
+                    className="w-full bg-green-600 hover:bg-green-700 text-white p-3 rounded-xl font-bold transition-colors flex items-center justify-center gap-2"
+                  >
+                    <CloudArrowUpIcon className="h-5 w-5" />
+                    Completar esta Incapacidad
+                  </button>
+                  
+                  <button
+                    onClick={resetApp}
+                    className={`w-full p-3 rounded-xl font-bold border transition-colors ${currentTheme.buttonOutline}`}
+                  >
+                    Cancelar
+                  </button>
+                </div>
+              </div>
+            </motion.div>
+          )}
+
           {step === 2 && (
             <motion.div
               key="step2"
@@ -862,31 +1074,53 @@ const App = () => {
               className="space-y-4"
             >
               <div className="flex justify-between items-center">
-                <h2 className="text-xl font-bold">Documentos requeridos</h2>
-                <button onClick={() => setStep(4)} className={`p-2 rounded-full ${currentTheme.buttonOutline}`}>
+                <h2 className="text-xl font-bold">
+                  {modoReenvio ? 'Completa los documentos' : 'Documentos requeridos'}
+                </h2>
+                <button 
+                  onClick={() => modoReenvio ? setStep(2.5) : setStep(4)} 
+                  className={`p-2 rounded-full ${currentTheme.buttonOutline}`}
+                >
                   <ChevronLeftIcon className="h-5 w-5" />
                 </button>
               </div>
+              
+              {/* Banner de modo reenvío */}
+              {modoReenvio && bloqueo && (
+                <div className="bg-blue-50 border-2 border-blue-400 rounded-xl p-4">
+                  <div className="flex items-center gap-3">
+                    <InformationCircleIcon className="h-6 w-6 text-blue-600 flex-shrink-0" />
+                    <div>
+                      <p className="font-bold text-blue-900">
+                        🔄 Completando caso {bloqueo.serial}
+                      </p>
+                      <p className="text-sm text-blue-700 mt-1">
+                        Solo sube los documentos que faltan. Los demás datos ya están guardados.
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              )}
               <DocumentsUploadSection />
               <div className="flex gap-4 mt-8">
                 <button
-                  onClick={() => setStep(4)}
+                  onClick={() => modoReenvio ? setStep(2.5) : setStep(4)}
                   className={`w-full p-3 rounded-xl font-bold border transition-colors ${currentTheme.buttonOutline}`}
                 >
                   Atrás
                 </button>
                 <button
-                  onClick={handleSubmit}
+                  onClick={modoReenvio ? handleFinalSubmit : handleSubmit}
                   disabled={!isSubmissionReady}
                   className={`w-full p-3 rounded-xl font-bold transition-colors duration-200 ${currentTheme.button} ${!isSubmissionReady ? 'opacity-50 cursor-not-allowed' : ''}`}
                 >
-                  Siguiente
+                  {modoReenvio ? 'Enviar y completar' : 'Siguiente'}
                 </button>
               </div>
             </motion.div>
           )}
 
-          {step === 6 && (
+          {step === 6 && !modoReenvio && (
             <motion.div
               key="step6"
               initial={{ opacity: 0, y: 20 }}
@@ -975,9 +1209,13 @@ const App = () => {
               className="text-center"
             >
               <CheckCircleIcon className={`h-16 w-16 mx-auto mb-4 ${currentTheme.success}`} />
-              <h2 className="text-2xl font-bold mb-2">Solicitud enviada con éxito</h2>
+              <h2 className="text-2xl font-bold mb-2">
+                {modoReenvio ? 'Documentos completados con éxito' : 'Solicitud enviada con éxito'}
+              </h2>
               <p className="text-sm opacity-80 mb-6">
-                Hemos recibido tu solicitud. Pronto nos comunicaremos contigo.
+                {modoReenvio 
+                  ? 'Tu caso será revisado nuevamente. Pronto nos comunicaremos contigo con los resultados.'
+                  : 'Hemos recibido tu solicitud. Pronto nos comunicaremos contigo.'}
               </p>
               <button
                 onClick={resetApp}
