@@ -348,7 +348,7 @@ const App = () => {
 
     if (modoReenvio) {
       // ✅ MODO REENVÍO: Solo archivos
-      endpoint = `${backendUrl}/casos/${bloqueo.serial}/completar`;
+      endpoint = `${backendUrl}/casos/${bloqueo.serial}/reenviar`;
       
       const archivos = Object.values(uploadedFiles);
       archivos.forEach(file => {
