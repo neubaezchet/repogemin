@@ -219,6 +219,18 @@ const App = () => {
         if (dataBloqueo.bloqueado) {
           // Hay caso bloqueante → Ir a pantalla de bloqueo
           setBloqueo(dataBloqueo.caso_pendiente);
+          setModoReenvio(true);
+          
+          // Prellenar tipo de incapacidad
+          const tipoBloqueante = dataBloqueo.caso_pendiente.tipo.toLowerCase();
+          if (tipoBloqueante.includes('maternidad') || tipoBloqueante === 'maternity') {
+            setIncapacityType('maternity');
+          } else if (tipoBloqueante.includes('paternidad') || tipoBloqueante === 'paternity') {
+            setIncapacityType('paternity');
+          } else {
+            setIncapacityType('other');
+          }
+          
           setStep(2.5); // Nuevo paso intermedio
         } else {
           // No hay bloqueo → Flujo normal
@@ -242,31 +254,7 @@ const App = () => {
     }
   };
 
-  // ✅ NUEVA FUNCIÓN: Iniciar modo reenvío
-  const handleIniciarReenvio = () => {
-    setModoReenvio(true);
-    
-    // Prellenar tipo de incapacidad del caso bloqueante
-    const tipoBloqueante = bloqueo.tipo.toLowerCase();
-    if (tipoBloqueante.includes('maternidad') || tipoBloqueante === 'maternity') {
-      setIncapacityType('maternity');
-    } else if (tipoBloqueante.includes('paternidad') || tipoBloqueante === 'paternity') {
-      setIncapacityType('paternity');
-    } else {
-      setIncapacityType('other');
-      // Intentar detectar subtipo
-      if (tipoBloqueante.includes('general')) {
-        setSubType('general');
-      } else if (tipoBloqueante.includes('tránsito') || tipoBloqueante.includes('traffic')) {
-        setSubType('traffic');
-      } else if (tipoBloqueante.includes('laboral') || tipoBloqueante.includes('labor')) {
-        setSubType('labor');
-      }
-    }
-    
-    // Saltar directo a subida de archivos
-    setStep(5);
-  };
+  
 
   // ✅ NUEVA FUNCIÓN: Formatear checks para mostrar legible
   const formatearCheck = (check) => {
@@ -339,7 +327,7 @@ const App = () => {
   };
 
   const handleFinalSubmit = async (e) => {
-    e.preventDefault();
+    if (e) e.preventDefault();
     setIsSubmitting(true);
 
     const backendUrl = process.env.REACT_APP_BACKEND_URL;
@@ -947,14 +935,131 @@ const App = () => {
                   </ol>
                 </div>
                 
+                {/* ✅ CAMPOS DE SUBIDA DE DOCUMENTOS */}
+                <div className="bg-white rounded-lg p-4 mt-4">
+                  <h4 className="font-bold text-gray-900 mb-4 flex items-center gap-2">
+                    <CloudArrowUpIcon className="h-5 w-5 text-blue-600" />
+                    Documentos requeridos para {bloqueo.tipo}
+                  </h4>
+                  
+                  {/* Si eligió "Otro tipo", mostrar campos específicos */}
+                  {incapacityType === 'other' && (
+                    <div className="space-y-3 mb-4 p-3 bg-gray-50 rounded-lg">
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                          Causa específica
+                        </label>
+                        <select
+                          value={subType || ''}
+                          onChange={(e) => {
+                            setSubType(e.target.value);
+                            setUploadedFiles({});
+                          }}
+                          className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm"
+                        >
+                          <option value="">Selecciona una causa</option>
+                          <option value="general">Enfermedad general</option>
+                          <option value="traffic">Accidente de tránsito</option>
+                          <option value="labor">Accidente laboral</option>
+                        </select>
+                      </div>
+                      
+                      {subType && (
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-1">
+                            Días de incapacidad
+                          </label>
+                          <input
+                            type="number"
+                            value={daysOfIncapacity}
+                            onChange={(e) => setDaysOfIncapacity(e.target.value)}
+                            className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm"
+                            placeholder="Ej: 5"
+                          />
+                        </div>
+                      )}
+                      
+                      {subType === 'traffic' && (
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-2">
+                            ¿Vehículo fantasma?
+                          </label>
+                          <div className="flex gap-4">
+                            <label className="flex items-center gap-2">
+                              <input
+                                type="radio"
+                                name="phantom"
+                                checked={specificFields.isPhantomVehicle === true}
+                                onChange={() => setSpecificFields({...specificFields, isPhantomVehicle: true})}
+                              />
+                              <span className="text-sm">Sí</span>
+                            </label>
+                            <label className="flex items-center gap-2">
+                              <input
+                                type="radio"
+                                name="phantom"
+                                checked={specificFields.isPhantomVehicle === false}
+                                onChange={() => setSpecificFields({...specificFields, isPhantomVehicle: false})}
+                              />
+                              <span className="text-sm">No</span>
+                            </label>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  )}
+                  
+                  {/* Zona de dropzone para cada documento */}
+                  {getRequiredDocs.length > 0 ? (
+                    <div className="space-y-3">
+                      {getRequiredDocs.map((docName) => (
+                        <DropzoneArea key={docName} docName={docName} />
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="text-center py-6 text-sm text-gray-500">
+                      ⚠️ Completa los campos arriba para ver los documentos requeridos
+                    </div>
+                  )}
+                </div>
+                
+                
+                
                 {/* Botones de acción */}
                 <div className="flex flex-col gap-3 mt-6">
                   <button
-                    onClick={handleIniciarReenvio}
-                    className="w-full bg-green-600 hover:bg-green-700 text-white p-3 rounded-xl font-bold transition-colors flex items-center justify-center gap-2"
+                    onClick={() => {
+                      if (getRequiredDocs.length === 0) {
+                        alert('⚠️ Selecciona el tipo de incapacidad y completa los campos requeridos');
+                        return;
+                      }
+                      
+                      const archivosSubidos = getRequiredDocs.every(doc => uploadedFiles[doc]);
+                      if (!archivosSubidos) {
+                        alert('⚠️ Debes subir TODOS los documentos requeridos antes de continuar');
+                        return;
+                      }
+                      
+                      // Todo OK → Enviar
+                      handleFinalSubmit();
+                    }}
+                    disabled={isSubmitting}
+                    className="w-full bg-green-600 hover:bg-green-700 text-white p-3 rounded-xl font-bold transition-colors flex items-center justify-center gap-2 disabled:opacity-50"
                   >
-                    <CloudArrowUpIcon className="h-5 w-5" />
-                    Completar esta Incapacidad
+                    {isSubmitting ? (
+                      <>
+                        <svg className="animate-spin h-5 w-5 text-white inline-block" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.965l3-2.674z"></path>
+                        </svg>
+                        Enviando...
+                      </>
+                    ) : (
+                      <>
+                        <CloudArrowUpIcon className="h-5 w-5" />
+                        Enviar y Completar ({Object.keys(uploadedFiles).length}/{getRequiredDocs.length})
+                      </>
+                    )}
                   </button>
                   
                   <button
