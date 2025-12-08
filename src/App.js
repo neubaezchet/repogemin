@@ -391,20 +391,35 @@ const App = () => {
     }
 
     try {
+      console.log('📤 Enviando a:', endpoint);
+      
       const response = await fetch(endpoint, {
         method: 'POST',
         body: formData,
       });
-      const data = await response.json();
+
+      console.log('📥 Status recibido:', response.status);
 
       if (response.ok) {
+        const data = await response.json();
+        console.log('✅ Respuesta exitosa:', data);
         setSubmissionComplete(true);
+        setApiError(null);
       } else {
-        setApiError(data.error || 'Error al enviar la solicitud. Inténtalo de nuevo.');
+        const data = await response.json().catch(() => ({ error: 'Error del servidor' }));
+        console.error('❌ Error del servidor:', data);
+        setApiError(data.error || `Error ${response.status}: No se pudo procesar la solicitud.`);
       }
     } catch (error) {
-      setApiError('Error de conexión. Inténtalo de nuevo.');
-      console.error('Error:', error);
+      console.error('❌ Error de conexión:', error);
+      
+      if (error.name === 'TypeError' && error.message.includes('fetch')) {
+        setApiError('Error de conexión con el servidor. Verifica tu internet.');
+      } else if (error.name === 'AbortError') {
+        setApiError('La solicitud tardó demasiado. Inténtalo de nuevo.');
+      } else {
+        setApiError('Error inesperado. Por favor inténtalo de nuevo.');
+      }
     } finally {
       setIsSubmitting(false);
     }
@@ -815,7 +830,7 @@ const App = () => {
               <form onSubmit={handleCedulaSubmit} className="space-y-4">
                 <div>
                   <label htmlFor="cedula" className="block text-sm font-medium">
-                    Número de Cédula o CE
+                    Número de documento de identidad
                   </label>
                   <input
                     type="text"
