@@ -335,8 +335,8 @@ const App = () => {
     const formData = new FormData();
 
     if (modoReenvio) {
-      // ✅ MODO REENVÍO: Solo archivos
-      endpoint = `${backendUrl}/casos/${bloqueo.serial}/reenviar`;
+      // ✅ MODO REENVÍO: Completar documentos faltantes
+      endpoint = `${backendUrl}/casos/${bloqueo.serial}/completar`;
       
       const archivos = Object.values(uploadedFiles);
       archivos.forEach(file => {
@@ -937,77 +937,35 @@ const App = () => {
                 
                 {/* ✅ CAMPOS DE SUBIDA DE DOCUMENTOS */}
                 <div className="bg-white rounded-lg p-4 mt-4">
-                  <h4 className="font-bold text-gray-900 mb-4 flex items-center gap-2">
-                    <CloudArrowUpIcon className="h-5 w-5 text-blue-600" />
-                    Documentos requeridos para {bloqueo.tipo}
-                  </h4>
+                  <div className="flex items-center justify-between mb-4">
+                    <h4 className="font-bold text-gray-900 flex items-center gap-2">
+                      <CloudArrowUpIcon className="h-5 w-5 text-blue-600" />
+                      Subir documentos requeridos
+                    </h4>
+                    
+                    {/* Botón Cambiar Tipo */}
+                    <select
+                      value={incapacityType || bloqueo.tipo}
+                      onChange={(e) => {
+                        const nuevoTipo = e.target.value;
+                        setIncapacityType(nuevoTipo);
+                        setUploadedFiles({});
+                        
+                        // Reset campos específicos
+                        if (nuevoTipo === 'other') {
+                          setSubType(null);
+                          setDaysOfIncapacity('');
+                        }
+                      }}
+                      className="text-sm px-3 py-1 bg-amber-100 text-amber-800 border border-amber-300 rounded-lg font-medium"
+                    >
+                      <option value="maternity">Maternidad</option>
+                      <option value="paternity">Paternidad</option>
+                      <option value="other">Otro tipo</option>
+                    </select>
+                  </div>
                   
-                  {/* Si eligió "Otro tipo", mostrar campos específicos */}
-                  {incapacityType === 'other' && (
-                    <div className="space-y-3 mb-4 p-3 bg-gray-50 rounded-lg">
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">
-                          Causa específica
-                        </label>
-                        <select
-                          value={subType || ''}
-                          onChange={(e) => {
-                            setSubType(e.target.value);
-                            setUploadedFiles({});
-                          }}
-                          className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm"
-                        >
-                          <option value="">Selecciona una causa</option>
-                          <option value="general">Enfermedad general</option>
-                          <option value="traffic">Accidente de tránsito</option>
-                          <option value="labor">Accidente laboral</option>
-                        </select>
-                      </div>
-                      
-                      {subType && (
-                        <div>
-                          <label className="block text-sm font-medium text-gray-700 mb-1">
-                            Días de incapacidad
-                          </label>
-                          <input
-                            type="number"
-                            value={daysOfIncapacity}
-                            onChange={(e) => setDaysOfIncapacity(e.target.value)}
-                            className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm"
-                            placeholder="Ej: 5"
-                          />
-                        </div>
-                      )}
-                      
-                      {subType === 'traffic' && (
-                        <div>
-                          <label className="block text-sm font-medium text-gray-700 mb-2">
-                            ¿Vehículo fantasma?
-                          </label>
-                          <div className="flex gap-4">
-                            <label className="flex items-center gap-2">
-                              <input
-                                type="radio"
-                                name="phantom"
-                                checked={specificFields.isPhantomVehicle === true}
-                                onChange={() => setSpecificFields({...specificFields, isPhantomVehicle: true})}
-                              />
-                              <span className="text-sm">Sí</span>
-                            </label>
-                            <label className="flex items-center gap-2">
-                              <input
-                                type="radio"
-                                name="phantom"
-                                checked={specificFields.isPhantomVehicle === false}
-                                onChange={() => setSpecificFields({...specificFields, isPhantomVehicle: false})}
-                              />
-                              <span className="text-sm">No</span>
-                            </label>
-                          </div>
-                        </div>
-                      )}
-                    </div>
-                  )}
+                  {/* Los campos específicos NO deben aparecer aquí en paso 2.5 */}
                   
                   {/* Zona de dropzone para cada documento */}
                   {getRequiredDocs.length > 0 ? (
@@ -1023,7 +981,26 @@ const App = () => {
                   )}
                 </div>
                 
-                
+                {/* ✅ CAMPOS DE SUBIDA DE DOCUMENTOS */}
+                <div className="bg-white rounded-lg p-4 mt-4">
+                  <h4 className="font-bold text-gray-900 mb-3 flex items-center gap-2">
+                    <CloudArrowUpIcon className="h-5 w-5 text-blue-600" />
+                    Documentos requeridos para {bloqueo.tipo}
+                  </h4>
+                  
+                  {/* Zona de dropzone para cada documento */}
+                  {getRequiredDocs.length > 0 ? (
+                    <div className="space-y-3">
+                      {getRequiredDocs.map((docName) => (
+                        <DropzoneArea key={docName} docName={docName} />
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="text-center py-6 text-sm text-gray-500">
+                      ⚠️ No hay documentos requeridos configurados para este tipo
+                    </div>
+                  )}
+                </div>
                 
                 {/* Botones de acción */}
                 <div className="flex flex-col gap-3 mt-6">
