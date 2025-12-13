@@ -221,15 +221,28 @@ const App = () => {
           setBloqueo(dataBloqueo.caso_pendiente);
           setModoReenvio(true);
           
-          // Prellenar tipo de incapacidad
-          const tipoBloqueante = dataBloqueo.caso_pendiente.tipo.toLowerCase();
-          if (tipoBloqueante.includes('maternidad') || tipoBloqueante === 'maternity') {
-            setIncapacityType('maternity');
-          } else if (tipoBloqueante.includes('paternidad') || tipoBloqueante === 'paternity') {
-            setIncapacityType('paternity');
-          } else {
-            setIncapacityType('other');
-          }
+        // Detectar si el validador cambió el tipo
+              const tipoBloqueante = dataBloqueo.caso_pendiente.tipo.toLowerCase();
+              const tipoCambiado = dataBloqueo.caso_pendiente.tipo_cambiado || false;
+              
+              if (tipoCambiado) {
+                // Si cambió el tipo, usar el nuevo tipo solicitado
+                setIncapacityType(dataBloqueo.caso_pendiente.tipo_nuevo);
+                if (dataBloqueo.caso_pendiente.tipo_nuevo === 'other') {
+                  setSubType(dataBloqueo.caso_pendiente.subtipo || 'general');
+                  setDaysOfIncapacity(dataBloqueo.caso_pendiente.dias || '');
+                }
+              } else {
+                // Usar el tipo original sin modificarlo
+                if (tipoBloqueante.includes('maternidad') || tipoBloqueante === 'maternity') {
+                  setIncapacityType('maternity');
+                } else if (tipoBloqueante.includes('paternidad') || tipoBloqueante === 'paternity') {
+                  setIncapacityType('paternity');
+                } else {
+                  setIncapacityType('other');
+                  setSubType('general');
+                }
+              }
           
           setStep(2.5); // Nuevo paso intermedio
         } else {
@@ -937,35 +950,20 @@ const App = () => {
                 
                 {/* ✅ CAMPOS DE SUBIDA DE DOCUMENTOS */}
                 <div className="bg-white rounded-lg p-4 mt-4">
-                  <div className="flex items-center justify-between mb-4">
-                    <h4 className="font-bold text-gray-900 flex items-center gap-2">
-                      <CloudArrowUpIcon className="h-5 w-5 text-blue-600" />
-                      Subir documentos requeridos
-                    </h4>
-                    
-                    {/* Botón Cambiar Tipo */}
-                    <select
-                      value={incapacityType || bloqueo.tipo}
-                      onChange={(e) => {
-                        const nuevoTipo = e.target.value;
-                        setIncapacityType(nuevoTipo);
-                        setUploadedFiles({});
-                        
-                        // Reset campos específicos
-                        if (nuevoTipo === 'other') {
-                          setSubType(null);
-                          setDaysOfIncapacity('');
-                        }
-                      }}
-                      className="text-sm px-3 py-1 bg-amber-100 text-amber-800 border border-amber-300 rounded-lg font-medium"
-                    >
-                      <option value="maternity">Maternidad</option>
-                      <option value="paternity">Paternidad</option>
-                      <option value="other">Otro tipo</option>
-                    </select>
-                  </div>
+                  <h4 className="font-bold text-gray-900 mb-4 flex items-center gap-2">
+                    <CloudArrowUpIcon className="h-5 w-5 text-blue-600" />
+                    Documentos requeridos para {bloqueo.tipo_display || bloqueo.tipo}
+                  </h4>
                   
-                  {/* Los campos específicos NO deben aparecer aquí en paso 2.5 */}
+                  {/* Campos específicos SOLO si el validador cambió el tipo */}
+                  {bloqueo.tipo_cambiado && (
+                    <div className="bg-amber-50 border border-amber-300 rounded-lg p-4 mb-4">
+                      <p className="text-sm text-amber-800 font-medium mb-3">
+                        ⚠️ El validador cambió el tipo de incapacidad. Completa esta información:
+                      </p>
+                      {renderSpecificFields()}
+                    </div>
+                  )}
                   
                   {/* Zona de dropzone para cada documento */}
                   {getRequiredDocs.length > 0 ? (
@@ -979,28 +977,7 @@ const App = () => {
                       ⚠️ Completa los campos arriba para ver los documentos requeridos
                     </div>
                   )}
-                </div>
-                
-                {/* ✅ CAMPOS DE SUBIDA DE DOCUMENTOS */}
-                <div className="bg-white rounded-lg p-4 mt-4">
-                  <h4 className="font-bold text-gray-900 mb-3 flex items-center gap-2">
-                    <CloudArrowUpIcon className="h-5 w-5 text-blue-600" />
-                    Documentos requeridos para {bloqueo.tipo}
-                  </h4>
-                  
-                  {/* Zona de dropzone para cada documento */}
-                  {getRequiredDocs.length > 0 ? (
-                    <div className="space-y-3">
-                      {getRequiredDocs.map((docName) => (
-                        <DropzoneArea key={docName} docName={docName} />
-                      ))}
-                    </div>
-                  ) : (
-                    <div className="text-center py-6 text-sm text-gray-500">
-                      ⚠️ No hay documentos requeridos configurados para este tipo
-                    </div>
-                  )}
-                </div>
+                </div>  
                 
                 {/* Botones de acción */}
                 <div className="flex flex-col gap-3 mt-6">
