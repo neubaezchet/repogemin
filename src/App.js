@@ -221,28 +221,121 @@ const App = () => {
           setBloqueo(dataBloqueo.caso_pendiente);
           setModoReenvio(true);
           
-        // Detectar si el validador cambió el tipo
+        // ✅ Detectar tipo de incapacidad y mapear correctamente
               const tipoBloqueante = dataBloqueo.caso_pendiente.tipo.toLowerCase();
               const tipoCambiado = dataBloqueo.caso_pendiente.tipo_cambiado || false;
               
+              console.log('🔍 Tipo recibido del backend:', dataBloqueo.caso_pendiente.tipo);
+              console.log('🔍 Tipo cambió:', tipoCambiado);
+              
               if (tipoCambiado) {
-                // Si cambió el tipo, usar el nuevo tipo solicitado
-                setIncapacityType(dataBloqueo.caso_pendiente.tipo_nuevo);
-                if (dataBloqueo.caso_pendiente.tipo_nuevo === 'other') {
-                  setSubType(dataBloqueo.caso_pendiente.subtipo || 'general');
-                  setDaysOfIncapacity(dataBloqueo.caso_pendiente.dias || '');
-                }
-              } else {
-                // Usar el tipo original sin modificarlo
-                if (tipoBloqueante.includes('maternidad') || tipoBloqueante === 'maternity') {
+                // El validador cambió el tipo → Usar el NUEVO tipo
+                const tipoNuevo = dataBloqueo.caso_pendiente.tipo_nuevo;
+                console.log('✅ Usando tipo NUEVO:', tipoNuevo);
+                
+                if (tipoNuevo === 'maternity' || tipoNuevo === 'maternidad') {
                   setIncapacityType('maternity');
-                } else if (tipoBloqueante.includes('paternidad') || tipoBloqueante === 'paternity') {
+                } else if (tipoNuevo === 'paternity' || tipoNuevo === 'paternidad') {
                   setIncapacityType('paternity');
+                  // Pre-llenar campo madre trabaja si viene del backend
+                  if (dataBloqueo.caso_pendiente.madre_trabaja !== undefined) {
+                    setSpecificFields(prev => ({
+                      ...prev,
+                      motherWorks: dataBloqueo.caso_pendiente.madre_trabaja
+                    }));
+                  }
+                } else if (tipoNuevo === 'traffic' || tipoNuevo.includes('transito')) {
+                  setIncapacityType('other');
+                  setSubType('traffic');
+                  setDaysOfIncapacity(dataBloqueo.caso_pendiente.dias || '3');
+                  // Pre-llenar campo vehículo fantasma
+                  if (dataBloqueo.caso_pendiente.vehiculo_fantasma !== undefined) {
+                    setSpecificFields(prev => ({
+                      ...prev,
+                      isPhantomVehicle: dataBloqueo.caso_pendiente.vehiculo_fantasma
+                    }));
+                  }
+                } else if (tipoNuevo === 'labor' || tipoNuevo.includes('laboral')) {
+                  setIncapacityType('other');
+                  setSubType('labor');
+                  setDaysOfIncapacity(dataBloqueo.caso_pendiente.dias || '3');
                 } else {
+                  // General por defecto
                   setIncapacityType('other');
                   setSubType('general');
+                  setDaysOfIncapacity(dataBloqueo.caso_pendiente.dias || '3');
+                }
+                
+              } else {
+                // ✅ FLUJO NORMAL: Mapear tipo original
+                console.log('📋 Usando tipo ORIGINAL:', tipoBloqueante);
+                
+                // Mapeo robusto de todos los tipos posibles
+                if (tipoBloqueante.includes('maternidad') || tipoBloqueante === 'maternity') {
+                  setIncapacityType('maternity');
+                  console.log('✅ Tipo mapeado: maternity');
+                  
+                } else if (tipoBloqueante.includes('paternidad') || tipoBloqueante === 'paternity') {
+                  setIncapacityType('paternity');
+                  console.log('✅ Tipo mapeado: paternity');
+                  
+                } else if (tipoBloqueante.includes('transito') || tipoBloqueante.includes('tránsito') || tipoBloqueante === 'accidente_transito') {
+                  setIncapacityType('other');
+                  setSubType('traffic');
+                  setDaysOfIncapacity('3'); // Default 3 días
+                  console.log('✅ Tipo mapeado: traffic');
+                  
+                } else if (tipoBloqueante.includes('laboral') || tipoBloqueante === 'enfermedad_laboral' || tipoBloqueante === 'accidente_laboral') {
+                  setIncapacityType('other');
+                  setSubType('labor');
+                  setDaysOfIncapacity('3'); // Default 3 días
+                  console.log('✅ Tipo mapeado: labor');
+                  
+                } else if (tipoBloqueante.includes('general') || tipoBloqueante === 'enfermedad_general') {
+                  setIncapacityType('other');
+                  setSubType('general');
+                  setDaysOfIncapacity('3'); // Default 3 días
+                  console.log('✅ Tipo mapeado: general');
+                  
+                } else {
+                  // Fallback: enfermedad general
+                  setIncapacityType('other');
+                  setSubType('general');
+                  setDaysOfIncapacity('3');
+                  console.warn('⚠️ Tipo desconocido, usando general:', tipoBloqueante);
                 }
               }
+```
+
+---
+
+## **¿Por qué esto soluciona el problema?**
+
+1. **Mapeo completo:** Ahora detecta todos los tipos posibles del backend:
+   - `enfermedad_general`
+   - `enfermedad_laboral` / `accidente_laboral`
+   - `accidente_transito`
+   - `maternidad`
+   - `paternidad`
+
+2. **Días por defecto:** Asigna `3 días` como default para que `getRequiredDocs` funcione
+
+3. **Logs de debug:** Verás en consola qué tipo recibió y cómo lo mapeó
+
+4. **Fallback seguro:** Si el tipo es desconocido, usa `general` como respaldo
+
+---
+
+## **PRUEBA:**
+
+1. Aplica el cambio
+2. Ingresa con una cédula que tenga incapacidad incompleta
+3. Abre la consola del navegador (F12)
+4. Verás logs como:
+```
+   🔍 Tipo recibido del backend: enfermedad_general
+   📋 Usando tipo ORIGINAL: enfermedad_general
+   ✅ Tipo mapeado: general
           
           setStep(2.5); // Nuevo paso intermedio
         } else {
