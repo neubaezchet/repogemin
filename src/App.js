@@ -119,6 +119,8 @@ const documentRequirements = {
     }
     return docs;
   },
+  prelicencia: ['Prelicencia de maternidad'],
+  certificado: ['Certificado de hospitalización'],
 };
 
 // Validación de calidad de imagen
@@ -163,6 +165,10 @@ const App = () => {
   // ✅ NUEVOS ESTADOS PARA BLOQUEO
   const [bloqueo, setBloqueo] = useState(null);
   const [modoReenvio, setModoReenvio] = useState(false);
+  
+  // ✅ NUEVOS ESTADOS PARA FECHAS DE INCAPACIDAD
+  const [incapacityStartDate, setIncapacityStartDate] = useState('');
+  const [incapacityEndDate, setIncapacityEndDate] = useState('');
 
   const currentTheme = themes[theme];
 
@@ -185,6 +191,8 @@ const App = () => {
     setValidatingFiles({});
     setBloqueo(null);
     setModoReenvio(false);
+    setIncapacityStartDate('');
+    setIncapacityEndDate('');
   };
 
   const handleCedulaChange = (e) => {
@@ -355,7 +363,13 @@ const App = () => {
     setUploadedFiles({});
     setSpecificFields({ births: '', motherWorks: null, isPhantomVehicle: null });
     setMostrarGuiaFotos(true);
-    setStep(4);
+    
+    // Para certificados y prelicencias, ir directo al paso 5 (subir docs)
+    if (type === 'prelicencia' || type === 'certificado') {
+      setStep(5);
+    } else {
+      setStep(4);
+    }
   };
 
   const handleSubTypeChange = (e) => {
@@ -368,6 +382,8 @@ const App = () => {
     if (incapacityType === 'maternity') return documentRequirements.maternity;
     if (incapacityType === 'paternity')
       return documentRequirements.paternity(specificFields.motherWorks);
+    if (incapacityType === 'prelicencia') return documentRequirements.prelicencia;
+    if (incapacityType === 'certificado') return documentRequirements.certificado;
     if (incapacityType === 'other') {
       if (!subType || !daysOfIncapacity) return [];
       const days = parseInt(daysOfIncapacity, 10);
@@ -440,6 +456,12 @@ const App = () => {
       if (subType) {
         formData.append('subType', subType);
       }
+      if (incapacityStartDate) {
+        formData.append('incapacityStartDate', incapacityStartDate);
+      }
+      if (incapacityEndDate) {
+        formData.append('incapacityEndDate', incapacityEndDate);
+      }
       
       const archivos = Object.values(uploadedFiles);
       archivos.forEach(file => {
@@ -496,6 +518,8 @@ const App = () => {
         return 'Detalla la información';
       case 5:
         return modoReenvio ? 'Completa los documentos faltantes' : 'Sube los documentos requeridos';
+      case 5.5:
+        return 'Fechas de la incapacidad';
       case 6:
         return 'Confirma tu información de contacto';
       default:
@@ -638,6 +662,9 @@ const App = () => {
 
   // Validación de campos del paso 4
   const isStep4Valid = () => {
+    if (incapacityType === 'prelicencia' || incapacityType === 'certificado') {
+      return true; // Siempre válido para estos tipos
+    }
     if (incapacityType === 'maternity') {
       return specificFields.births !== '';
     }
@@ -656,6 +683,20 @@ const App = () => {
 
   // Campos específicos según el tipo
   const renderSpecificFields = () => {
+    // Para prelicencia y certificado no hay campos específicos
+    if (incapacityType === 'prelicencia' || incapacityType === 'certificado') {
+      return (
+        <div className={`p-4 rounded-xl ${currentTheme.info} text-center`}>
+          <InformationCircleIcon className="h-8 w-8 mx-auto mb-2" />
+          <p className="text-sm font-medium">
+            {incapacityType === 'prelicencia' 
+              ? 'Solo necesitas adjuntar la prelicencia de maternidad'
+              : 'Solo necesitas adjuntar el certificado de hospitalización'}
+          </p>
+        </div>
+      );
+    }
+
     const fieldsToRender = [];
 
     // MATERNIDAD Y PATERNIDAD
@@ -1122,7 +1163,7 @@ const App = () => {
               transition={{ duration: 0.2 }}
             >
               <p className="text-center text-sm mb-6 font-medium">Selecciona el tipo de incapacidad que deseas registrar:</p>
-              <div className="grid grid-cols-3 gap-4">
+              <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
                 <motion.button
                   whileHover={{ scale: 1.05 }}
                   whileTap={{ scale: 0.95 }}
@@ -1155,6 +1196,32 @@ const App = () => {
                     <ClipboardDocumentListIcon className="h-8 w-8 text-blue-600" />
                   </div>
                   <span className="mt-2 text-xs text-center font-medium">Otro tipo</span>
+                </motion.button>
+                
+                {/* NUEVO: Prelicencia */}
+                <motion.button
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                  onClick={() => handleIncapacityType('prelicencia')}
+                  className={`flex flex-col items-center p-6 rounded-2xl transition-colors ${currentTheme.secondary} hover:ring-2 ring-blue-500`}
+                >
+                  <div className={`p-4 rounded-full ${currentTheme.iconBg}`}>
+                    <ClipboardDocumentListIcon className="h-8 w-8 text-purple-600" />
+                  </div>
+                  <span className="mt-2 text-xs text-center font-medium">Prelicencia Maternidad</span>
+                </motion.button>
+                
+                {/* NUEVO: Certificado */}
+                <motion.button
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                  onClick={() => handleIncapacityType('certificado')}
+                  className={`flex flex-col items-center p-6 rounded-2xl transition-colors ${currentTheme.secondary} hover:ring-2 ring-blue-500`}
+                >
+                  <div className={`p-4 rounded-full ${currentTheme.iconBg}`}>
+                    <ClipboardDocumentListIcon className="h-8 w-8 text-green-600" />
+                  </div>
+                  <span className="mt-2 text-xs text-center font-medium">Certificado Hospitalización</span>
                 </motion.button>
               </div>
             </motion.div>
@@ -1240,11 +1307,82 @@ const App = () => {
                   Atrás
                 </button>
                 <button
-                  onClick={modoReenvio ? handleFinalSubmit : handleSubmit}
+                  onClick={() => {
+                    if (modoReenvio) {
+                      handleFinalSubmit();
+                    } else if (incapacityType === 'prelicencia' || incapacityType === 'certificado') {
+                      // Para prelicencia y certificado, ir directo a correo
+                      setStep(6);
+                    } else {
+                      // Para otras incapacidades, ir a fechas
+                      setStep(5.5);
+                    }
+                  }}
                   disabled={!isSubmissionReady}
                   className={`w-full p-3 rounded-xl font-bold transition-colors duration-200 ${currentTheme.button} ${!isSubmissionReady ? 'opacity-50 cursor-not-allowed' : ''}`}
                 >
                   {modoReenvio ? 'Enviar y completar' : 'Siguiente'}
+                </button>
+              </div>
+            </motion.div>
+          )}
+
+          {step === 5.5 && !modoReenvio && (
+            <motion.div
+              key="step5.5"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -20 }}
+              transition={{ duration: 0.2 }}
+              className="space-y-4"
+            >
+              <div className="flex justify-between items-center">
+                <h2 className="text-xl font-bold">Fechas de la incapacidad</h2>
+                <button onClick={() => setStep(5)} className={`p-2 rounded-full ${currentTheme.buttonOutline}`}>
+                  <ChevronLeftIcon className="h-5 w-5" />
+                </button>
+              </div>
+              <p className="text-sm text-gray-600">Ingresa las fechas que indica el soporte de tu incapacidad.</p>
+              
+              <div>
+                <label htmlFor="startDate" className="block text-sm font-medium">
+                  Fecha inicial de la incapacidad
+                </label>
+                <input
+                  type="date"
+                  id="startDate"
+                  value={incapacityStartDate}
+                  onChange={(e) => setIncapacityStartDate(e.target.value)}
+                  className={`mt-1 block w-full rounded-xl border-0 p-3 shadow-sm focus:ring-2 sm:text-sm transition-colors ${currentTheme.input}`}
+                />
+              </div>
+              
+              <div>
+                <label htmlFor="endDate" className="block text-sm font-medium">
+                  Fecha final de la incapacidad
+                </label>
+                <input
+                  type="date"
+                  id="endDate"
+                  value={incapacityEndDate}
+                  onChange={(e) => setIncapacityEndDate(e.target.value)}
+                  className={`mt-1 block w-full rounded-xl border-0 p-3 shadow-sm focus:ring-2 sm:text-sm transition-colors ${currentTheme.input}`}
+                />
+              </div>
+              
+              <div className="flex gap-4 mt-8">
+                <button
+                  onClick={() => setStep(5)}
+                  className={`w-full p-3 rounded-xl font-bold border transition-colors ${currentTheme.buttonOutline}`}
+                >
+                  Atrás
+                </button>
+                <button
+                  onClick={() => setStep(6)}
+                  disabled={!incapacityStartDate || !incapacityEndDate}
+                  className={`w-full p-3 rounded-xl font-bold transition-colors duration-200 ${currentTheme.button} ${(!incapacityStartDate || !incapacityEndDate) ? 'opacity-50 cursor-not-allowed' : ''}`}
+                >
+                  Siguiente
                 </button>
               </div>
             </motion.div>
