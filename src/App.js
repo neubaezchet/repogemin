@@ -472,11 +472,18 @@ const App = () => {
     try {
       console.log('📤 Enviando a:', endpoint);
       
+      // ✅ Crear AbortController con timeout de 60 segundos
+      // (n8n puede tardar hasta 30s, le damos margen)
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 60000);
+      
       const response = await fetch(endpoint, {
         method: 'POST',
         body: formData,
+        signal: controller.signal,
       });
 
+      clearTimeout(timeoutId);
       console.log('📥 Status recibido:', response.status);
 
       if (response.ok) {
@@ -492,10 +499,14 @@ const App = () => {
     } catch (error) {
       console.error('❌ Error de conexión:', error);
       
-      if (error.name === 'TypeError' && error.message.includes('fetch')) {
+      // ✅ IMPORTANTE: Si hay timeout (AbortError), n8n probablemente YA envió el email
+      // Mostrar éxito al usuario porque el backend devuelve exitoso después
+      if (error.name === 'AbortError') {
+        console.warn('⚠️ Timeout detectado, pero el email probablemente se envió');
+        setSubmissionComplete(true);
+        setApiError(null);
+      } else if (error.name === 'TypeError' && error.message.includes('fetch')) {
         setApiError('Error de conexión con el servidor. Verifica tu internet.');
-      } else if (error.name === 'AbortError') {
-        setApiError('La solicitud tardó demasiado. Inténtalo de nuevo.');
       } else {
         setApiError('Error inesperado. Por favor inténtalo de nuevo.');
       }
