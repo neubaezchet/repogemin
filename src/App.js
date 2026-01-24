@@ -360,7 +360,6 @@ const App = () => {
     setDaysOfIncapacity('');
     setUploadedFiles({});
     setSpecificFields({ births: '', motherWorks: null, isPhantomVehicle: null });
-    setMostrarGuiaFotos(true);
     
     // Para certificados y prelicencias, ir directo al paso 5 (subir docs)
     if (type === 'prelicencia' || type === 'certificado') {
