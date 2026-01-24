@@ -118,8 +118,13 @@ const documentRequirements = {
     }
     return docs;
   },
-  prelicencia: ['Prelicencia de maternidad'],
-  certificado: ['Certificado de hospitalización'],
+  prelicencia: [
+    'Prelicencia de maternidad',
+    'Soporte resumen de atención',  // ✅ NUEVO
+  ],
+  certificado: [
+    'Certificado de hospitalización',
+  ],
 };
 
 // Validación de calidad de imagen
