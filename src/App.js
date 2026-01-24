@@ -1,6 +1,5 @@
 import { useState, useMemo, useCallback } from 'react';
 import { validarCalidadArchivo } from './utils/validadorCalidad';
-import ToastGuiaFotos from './components/ToastGuiaFotos';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useDropzone } from 'react-dropzone';
 import {
@@ -160,7 +159,6 @@ const App = () => {
   const [submissionComplete, setSubmissionComplete] = useState(false);
   const [apiError, setApiError] = useState(null);
   const [validatingFiles, setValidatingFiles] = useState({});
-  const [mostrarGuiaFotos, setMostrarGuiaFotos] = useState(false);
   
   // ✅ NUEVOS ESTADOS PARA BLOQUEO
   const [bloqueo, setBloqueo] = useState(null);
@@ -402,14 +400,6 @@ const App = () => {
       return file && file.isLegible;
     });
   }, [getRequiredDocs, uploadedFiles]);
-
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    if (isSubmissionReady) {
-      setApiError(null);
-      setStep(6);
-    }
-  };
 
   const handleFinalSubmit = async (e) => {
     if (e) e.preventDefault();
