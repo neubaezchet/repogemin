@@ -164,6 +164,7 @@ const App = () => {
   const [submissionComplete, setSubmissionComplete] = useState(false);
   const [apiError, setApiError] = useState(null);
   const [validatingFiles, setValidatingFiles] = useState({});
+  const [serverResponse, setServerResponse] = useState(null); // ✅ NUEVO: guardar respuesta completa
   
   // ✅ NUEVOS ESTADOS PARA BLOQUEO
   const [bloqueo, setBloqueo] = useState(null);
@@ -196,6 +197,7 @@ const App = () => {
     setModoReenvio(false);
     setIncapacityStartDate('');
     setIncapacityEndDate('');
+    setServerResponse(null); // ✅ NUEVO: resetear respuesta del servidor
   };
 
   const handleCedulaChange = (e) => {
@@ -483,6 +485,23 @@ const App = () => {
       if (response.ok) {
         const data = await response.json();
         console.log('✅ Respuesta exitosa:', data);
+        
+        // ✅ GUARDAR respuesta completa para mostrar detalles
+        setServerResponse(data);
+        
+        // ✅ NUEVO: Verificar confirmación de notificaciones enviadas
+        if (data.notificacion_enviada) {
+          console.log('📧 Notificaciones enviadas:', data.canales_notificados);
+          if (data.canales_notificados?.email) {
+            console.log('  ✓ Email enviado correctamente');
+          }
+          if (data.canales_notificados?.whatsapp) {
+            console.log('  ✓ WhatsApp enviado correctamente');
+          }
+        } else {
+          console.warn('⚠️ Las notificaciones no fueron enviadas por n8n');
+        }
+        
         setSubmissionComplete(true);
         setApiError(null);
       } else {
@@ -1485,11 +1504,33 @@ const App = () => {
               <h2 className="text-2xl font-bold mb-2">
                 {modoReenvio ? 'Documentos completados con éxito' : 'Solicitud enviada con éxito'}
               </h2>
-              <p className="text-sm opacity-80 mb-6">
+              <p className="text-sm opacity-80 mb-4">
                 {modoReenvio 
                   ? 'Tu caso será revisado nuevamente. Pronto nos comunicaremos contigo con los resultados.'
                   : 'Hemos recibido tu solicitud. Pronto nos comunicaremos contigo.'}
               </p>
+              
+              {/* ✅ NUEVO: Mostrar confirmación de notificaciones */}
+              {serverResponse?.notificacion_enviada && (
+                <div className="mb-4 p-3 bg-green-50 dark:bg-green-900/20 rounded-lg border border-green-200 dark:border-green-800">
+                  <p className="text-sm font-semibold text-green-800 dark:text-green-300 mb-2">
+                    📬 Notificaciones enviadas:
+                  </p>
+                  <div className="flex justify-center gap-4 text-xs">
+                    {serverResponse.canales_notificados?.email && (
+                      <span className="flex items-center gap-1 text-green-700 dark:text-green-400">
+                        ✓ Email enviado
+                      </span>
+                    )}
+                    {serverResponse.canales_notificados?.whatsapp && (
+                      <span className="flex items-center gap-1 text-green-700 dark:text-green-400">
+                        ✓ WhatsApp enviado
+                      </span>
+                    )}
+                  </div>
+                </div>
+              )}
+              
               <button
                 onClick={resetApp}
                 className={`w-full p-3 rounded-xl font-bold transition-colors ${currentTheme.button}`}
