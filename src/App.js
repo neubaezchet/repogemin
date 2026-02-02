@@ -217,6 +217,8 @@ const App = () => {
     try {
       const backendUrl = process.env.REACT_APP_BACKEND_URL || 'https://web-production-95ed.up.railway.app';
       
+      console.log('🔍 URL del backend:', backendUrl);
+      
       // PASO 1: Validar empleado
       const responseEmpleado = await fetch(`${backendUrl}/empleados/${cedula}`);
       const dataEmpleado = await responseEmpleado.json();
@@ -431,7 +433,7 @@ const App = () => {
       endpoint = `${backendUrl}/subir-incapacidad/`;
       
       formData.append('cedula', cedula);
-      formData.append('empresa', userCompany);
+      // ✅ NO enviar empresa - el backend la busca automáticamente
       formData.append('tipo', incapacityType || subType || 'general');
       formData.append('email', email);
       formData.append('telefono', phoneNumber);
@@ -466,7 +468,9 @@ const App = () => {
     }
 
     try {
+      console.log('📤 Iniciando envío...');
       console.log('📤 Enviando a:', endpoint);
+      console.log('📤 Modo reenvío:', modoReenvio);
       
       // ✅ Crear AbortController con timeout de 60 segundos
       // (n8n puede tardar hasta 30s, le damos margen)
@@ -481,10 +485,11 @@ const App = () => {
 
       clearTimeout(timeoutId);
       console.log('📥 Status recibido:', response.status);
+      console.log('📥 Headers:', Object.fromEntries(response.headers.entries()));
 
       if (response.ok) {
         const data = await response.json();
-        console.log('✅ Respuesta exitosa:', data);
+        console.log('✅ Respuesta exitosa completa:', data);
         
         // ✅ GUARDAR respuesta completa para mostrar detalles
         setServerResponse(data);
@@ -510,7 +515,10 @@ const App = () => {
         setApiError(data.error || `Error ${response.status}: No se pudo procesar la solicitud.`);
       }
     } catch (error) {
-      console.error('❌ Error de conexión:', error);
+      console.error('❌ Error completo:', error);
+      console.error('❌ Tipo de error:', error.name);
+      console.error('❌ Mensaje:', error.message);
+      console.error('❌ Stack:', error.stack);
       
       // ✅ IMPORTANTE: Si hay timeout (AbortError), n8n probablemente YA envió el email
       // Mostrar éxito al usuario porque el backend devuelve exitoso después
@@ -519,6 +527,7 @@ const App = () => {
         setSubmissionComplete(true);
         setApiError(null);
       } else if (error.name === 'TypeError' && error.message.includes('fetch')) {
+        console.error('❌ Error TypeError - problema de red o CORS');
         setApiError('Error de conexión con el servidor. Verifica tu internet.');
       } else {
         setApiError('Error inesperado. Por favor inténtalo de nuevo.');
