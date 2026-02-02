@@ -215,7 +215,7 @@ const App = () => {
     setIsSubmitting(true);
 
     try {
-      const backendUrl = process.env.REACT_APP_BACKEND_URL;
+      const backendUrl = process.env.REACT_APP_BACKEND_URL || 'https://web-production-95ed.up.railway.app';
       
       // PASO 1: Validar empleado
       const responseEmpleado = await fetch(`${backendUrl}/empleados/${cedula}`);
@@ -411,7 +411,7 @@ const App = () => {
     if (e) e.preventDefault();
     setIsSubmitting(true);
 
-    const backendUrl = process.env.REACT_APP_BACKEND_URL;
+    const backendUrl = process.env.REACT_APP_BACKEND_URL || 'https://web-production-95ed.up.railway.app';
     let endpoint;
     const formData = new FormData();
 

@@ -1,4 +1,4 @@
-const API_BASE = process.env.REACT_APP_BACKEND_URL;
+const API_BASE = process.env.REACT_APP_BACKEND_URL || 'https://web-production-95ed.up.railway.app';
 
 export const buscarEmpleado = async (cedula) => {
   const response = await fetch(`${API_BASE}/empleados/${cedula}`);
