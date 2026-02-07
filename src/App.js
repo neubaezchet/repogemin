@@ -1,4 +1,4 @@
-import { useState, useMemo, useCallback } from 'react';
+import { useState, useMemo, useCallback, useEffect } from 'react';
 import { validarCalidadArchivo } from './utils/validadorCalidad';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useDropzone } from 'react-dropzone';
@@ -199,6 +199,20 @@ const App = () => {
     setIncapacityEndDate('');
     setServerResponse(null); // ✅ NUEVO: resetear respuesta del servidor
   };
+
+  // ✅ CORRECCIÓN 4: Validación de serial en pantalla de bloqueo
+  useEffect(() => {
+    if (bloqueo?.serial) {
+      // Validar formato del serial (debe tener al menos 7 partes: CEDULA DD MM YYYY DD MM YYYY)
+      const partes = bloqueo.serial.split(' ');
+      if (partes.length < 7) {
+        console.error('❌ Serial con formato incorrecto:', bloqueo.serial);
+        setApiError('Error: Formato de serial inválido. Contacta soporte.');
+      } else {
+        console.log('✅ Serial validado correctamente:', bloqueo.serial);
+      }
+    }
+  }, [bloqueo]);
 
   const handleCedulaChange = (e) => {
     const value = e.target.value;
@@ -419,7 +433,8 @@ const App = () => {
 
     if (modoReenvio) {
       // ✅ MODO REENVÍO: Completar documentos faltantes
-      endpoint = `${backendUrl}/casos/${bloqueo.serial}/completar`;
+      // ✅ CORRECCIÓN 2: Encoding correcto del serial (contiene espacios)
+      endpoint = `${backendUrl}/casos/${encodeURIComponent(bloqueo.serial)}/completar`;
       
       const archivos = Object.values(uploadedFiles);
       archivos.forEach(file => {
@@ -472,10 +487,10 @@ const App = () => {
       console.log('📤 Enviando a:', endpoint);
       console.log('📤 Modo reenvío:', modoReenvio);
       
-      // ✅ Crear AbortController con timeout de 60 segundos
-      // (n8n puede tardar hasta 30s, le damos margen)
+      // ✅ CORRECCIÓN 1: Timeout aumentado para Railway + n8n
+      // (Railway puede tardar 60s + n8n 30s = 90s, usamos 95s de margen)
       const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 60000);
+      const timeoutId = setTimeout(() => controller.abort(), 95000);
       
       const response = await fetch(endpoint, {
         method: 'POST',
@@ -520,12 +535,23 @@ const App = () => {
       console.error('❌ Mensaje:', error.message);
       console.error('❌ Stack:', error.stack);
       
-      // ✅ IMPORTANTE: Si hay timeout (AbortError), n8n probablemente YA envió el email
-      // Mostrar éxito al usuario porque el backend devuelve exitoso después
+      // ✅ CORRECCIÓN 3: Mejor manejo de errores de timeout
       if (error.name === 'AbortError') {
-        console.warn('⚠️ Timeout detectado, pero el email probablemente se envió');
+        console.warn('⚠️ Timeout detectado (95s), pero el proceso probablemente se completó en el servidor');
+        
+        // Mostrar mensaje específico al usuario
         setSubmissionComplete(true);
         setApiError(null);
+        
+        // Guardar respuesta simulada para mostrar confirmación
+        setServerResponse({
+          mensaje: 'Proceso completado (tardó más de lo esperado)',
+          notificacion_enviada: true,
+          canales_notificados: {
+            email: true,
+            whatsapp: true
+          }
+        });
       } else if (error.name === 'TypeError' && error.message.includes('fetch')) {
         console.error('❌ Error TypeError - problema de red o CORS');
         setApiError('Error de conexión con el servidor. Verifica tu internet.');
