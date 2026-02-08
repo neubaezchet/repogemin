@@ -1323,7 +1323,7 @@ const App = () => {
             </motion.div>
           )}
 
-          {step === 5 && (
+          {step === 5 && !submissionComplete && (
             <motion.div
               key="step5"
               initial={{ opacity: 0, y: 20 }}
@@ -1389,7 +1389,7 @@ const App = () => {
             </motion.div>
           )}
 
-          {step === 5.5 && !modoReenvio && (
+          {step === 5.5 && !modoReenvio && !submissionComplete && (
             <motion.div
               key="step5.5"
               initial={{ opacity: 0, y: 20 }}
@@ -1450,7 +1450,7 @@ const App = () => {
             </motion.div>
           )}
 
-          {step === 6 && !modoReenvio && (
+          {step === 6 && !modoReenvio && !submissionComplete && (
             <motion.div
               key="step6"
               initial={{ opacity: 0, y: 20 }}
