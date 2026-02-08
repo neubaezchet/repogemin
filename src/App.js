@@ -1194,7 +1194,7 @@ const App = () => {
               <div className={`p-6 rounded-2xl ${currentTheme.info} text-center`}>
                 <UserCircleIcon className="h-16 w-16 mx-auto mb-4" />
                 <h3 className="font-bold text-lg mb-2">¿Eres {userName}?</h3>
-                <p className="text-sm">Identificado con CC o CE {cedula} y vinculado a {userCompany}.</p>
+                <p className="text-sm">Identificado con CC {cedula} y vinculado a {userCompany}.</p>
               </div>
               <div className="flex gap-4 mt-6">
                 <button
