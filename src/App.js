@@ -426,6 +426,9 @@ const App = () => {
   const handleFinalSubmit = async (e) => {
     if (e) e.preventDefault();
     setIsSubmitting(true);
+    
+    // ✅ Mostrar pantalla de éxito inmediatamente para evitar doble clic
+    setSubmissionComplete(true);
 
     const backendUrl = process.env.REACT_APP_BACKEND_URL || 'https://web-production-95ed.up.railway.app';
     let endpoint;
@@ -1545,7 +1548,22 @@ const App = () => {
                   : 'Hemos recibido tu solicitud. Pronto nos comunicaremos contigo.'}
               </p>
               
-              {/* ✅ NUEVO: Mostrar confirmación de notificaciones */}
+              {/* ✅ Indicador de procesamiento mientras espera respuesta del servidor */}
+              {isSubmitting && !serverResponse?.notificacion_enviada && (
+                <div className="mb-4 p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-200 dark:border-blue-800">
+                  <div className="flex items-center justify-center gap-2">
+                    <svg className="animate-spin h-5 w-5 text-blue-600 dark:text-blue-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.965l3-2.674z"></path>
+                    </svg>
+                    <span className="text-sm text-blue-800 dark:text-blue-300">
+                      Enviando notificaciones...
+                    </span>
+                  </div>
+                </div>
+              )}
+              
+              {/* ✅ Mostrar confirmación de notificaciones cuando respondan */}
               {serverResponse?.notificacion_enviada && (
                 <div className="mb-4 p-3 bg-green-50 dark:bg-green-900/20 rounded-lg border border-green-200 dark:border-green-800">
                   <p className="text-sm font-semibold text-green-800 dark:text-green-300 mb-2">
