@@ -1,4 +1,4 @@
-import { useState, useMemo, useCallback, useEffect } from 'react';
+import { useState, useMemo, useCallback, useEffect, useRef } from 'react';
 import { validarCalidadArchivo } from './utils/validadorCalidad';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useDropzone } from 'react-dropzone';
@@ -163,6 +163,34 @@ const App = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submissionComplete, setSubmissionComplete] = useState(false);
   const [apiError, setApiError] = useState(null);
+
+  const vantaRef = useRef(null);
+  const vantaEffect = useRef(null);
+
+  // Vanta.js FOG – solo en step 1
+  useEffect(() => {
+    if (step === 1 && !vantaEffect.current && window.VANTA) {
+      vantaEffect.current = window.VANTA.FOG({
+        el: vantaRef.current,
+        THREE: window.THREE,
+        mouseControls: true,
+        touchControls: true,
+        gyroControls: false,
+        minHeight: 200.00,
+        minWidth: 200.00,
+        highlightColor: 0x3d82a7,
+        midtoneColor: 0xffffff,
+        lowlightColor: 0xffffff,
+        baseColor: 0xe3aeae,
+        blurFactor: 0.90,
+        speed: 2.50,
+      });
+    }
+    if (step !== 1 && vantaEffect.current) {
+      vantaEffect.current.destroy();
+      vantaEffect.current = null;
+    }
+  }, [step]);
   const [validatingFiles, setValidatingFiles] = useState({});
   const [serverResponse, setServerResponse] = useState(null); // ✅ NUEVO: guardar respuesta completa
   
@@ -950,6 +978,7 @@ const App = () => {
 
   return (
     <div
+      ref={vantaRef}
       className={`min-h-screen p-4 sm:p-8 flex items-center justify-center transition-colors duration-300 ${currentTheme.bg}`}
     >
       {apiError && (
@@ -973,7 +1002,7 @@ const App = () => {
         </AnimatePresence>
       )}
 
-      <div className="absolute top-4 right-4">
+      <div className="absolute top-4 right-4" style={{ zIndex: 1 }}>
         <select
           value={theme}
           onChange={(e) => setTheme(e.target.value)}
@@ -988,6 +1017,7 @@ const App = () => {
       <motion.div
         layout
         className={`w-full max-w-xl p-8 rounded-3xl shadow-xl transition-colors duration-300 ${currentTheme.cardBg} ${currentTheme.cardBorder} border`}
+        style={{ position: 'relative', zIndex: 1 }}
       >
         <h1 className="text-3xl font-bold mb-2 text-center">{getStepTitle()}</h1>
         <p className="text-center text-sm mb-8 opacity-70">
