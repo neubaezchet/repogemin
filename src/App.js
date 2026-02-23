@@ -173,6 +173,10 @@ const App = () => {
   // ✅ NUEVOS ESTADOS PARA FECHAS DE INCAPACIDAD
   const [incapacityStartDate, setIncapacityStartDate] = useState('');
   const [incapacityEndDate, setIncapacityEndDate] = useState('');
+  
+  // ✅ VALIDACIÓN DE DUPLICADOS
+  const [duplicateError, setDuplicateError] = useState(null);
+  const [checkingDuplicate, setCheckingDuplicate] = useState(false);
 
   const currentTheme = themes[theme];
 
@@ -197,6 +201,8 @@ const App = () => {
     setModoReenvio(false);
     setIncapacityStartDate('');
     setIncapacityEndDate('');
+    setDuplicateError(null);
+    setCheckingDuplicate(false);
     setServerResponse(null); // ✅ NUEVO: resetear respuesta del servidor
   };
 
@@ -594,6 +600,16 @@ const App = () => {
       async (acceptedFiles) => {
         const file = acceptedFiles[0];
         if (file) {
+          // ✅ VALIDAR: No permitir el mismo archivo en otro campo
+          const archivosExistentes = Object.entries(uploadedFiles);
+          const duplicado = archivosExistentes.find(
+            ([otroDoc, otroFile]) => otroDoc !== docName && otroFile.name === file.name && otroFile.size === file.size
+          );
+          if (duplicado) {
+            alert(`⚠️ Este archivo "${file.name}" ya fue subido en "${duplicado[0]}". No puedes subir el mismo archivo en dos campos diferentes.`);
+            return;
+          }
+          
           setValidatingFiles(prev => ({ ...prev, [docName]: true }));
 
           const validationResult = await validateImageQuality(file);
@@ -1414,7 +1430,7 @@ const App = () => {
                   type="date"
                   id="startDate"
                   value={incapacityStartDate}
-                  onChange={(e) => setIncapacityStartDate(e.target.value)}
+                  onChange={(e) => { setIncapacityStartDate(e.target.value); setDuplicateError(null); }}
                   className={`mt-1 block w-full rounded-xl border-0 p-3 shadow-sm focus:ring-2 sm:text-sm transition-colors ${currentTheme.input}`}
                 />
               </div>
@@ -1427,10 +1443,18 @@ const App = () => {
                   type="date"
                   id="endDate"
                   value={incapacityEndDate}
-                  onChange={(e) => setIncapacityEndDate(e.target.value)}
+                  onChange={(e) => { setIncapacityEndDate(e.target.value); setDuplicateError(null); }}
                   className={`mt-1 block w-full rounded-xl border-0 p-3 shadow-sm focus:ring-2 sm:text-sm transition-colors ${currentTheme.input}`}
                 />
               </div>
+              
+              {/* ✅ ALERTA DE DUPLICADO */}
+              {duplicateError && (
+                <div className="bg-red-50 border border-red-300 rounded-xl p-4 text-sm text-red-800">
+                  <p className="font-bold">⚠️ Incapacidad duplicada</p>
+                  <p>{duplicateError}</p>
+                </div>
+              )}
               
               <div className="flex gap-4 mt-8">
                 <button
@@ -1440,11 +1464,29 @@ const App = () => {
                   Atrás
                 </button>
                 <button
-                  onClick={() => setStep(6)}
-                  disabled={!incapacityStartDate || !incapacityEndDate}
-                  className={`w-full p-3 rounded-xl font-bold transition-colors duration-200 ${currentTheme.button} ${(!incapacityStartDate || !incapacityEndDate) ? 'opacity-50 cursor-not-allowed' : ''}`}
+                  onClick={async () => {
+                    // ✅ VERIFICAR DUPLICADO antes de continuar
+                    setCheckingDuplicate(true);
+                    setDuplicateError(null);
+                    try {
+                      const backendUrl = process.env.REACT_APP_BACKEND_URL || 'https://web-production-95ed.up.railway.app';
+                      const resp = await fetch(`${backendUrl}/verificar-duplicado?cedula=${cedula}&fecha_inicio=${incapacityStartDate}&fecha_fin=${incapacityEndDate}`);
+                      const data = await resp.json();
+                      if (data.duplicado) {
+                        setDuplicateError(data.mensaje);
+                        setCheckingDuplicate(false);
+                        return;
+                      }
+                    } catch (err) {
+                      console.warn('⚠️ No se pudo verificar duplicado:', err);
+                    }
+                    setCheckingDuplicate(false);
+                    setStep(6);
+                  }}
+                  disabled={!incapacityStartDate || !incapacityEndDate || checkingDuplicate}
+                  className={`w-full p-3 rounded-xl font-bold transition-colors duration-200 ${currentTheme.button} ${(!incapacityStartDate || !incapacityEndDate || checkingDuplicate) ? 'opacity-50 cursor-not-allowed' : ''}`}
                 >
-                  Siguiente
+                  {checkingDuplicate ? 'Verificando...' : 'Siguiente'}
                 </button>
               </div>
             </motion.div>
