@@ -1068,7 +1068,7 @@ const App = () => {
             </motion.div>
           )}
 
-          {step === 2.5 && bloqueo && (
+          {step === 2.5 && bloqueo && !submissionComplete && (
             <motion.div
               key="step2.5"
               initial={{ opacity: 0, y: 20 }}
