@@ -202,6 +202,32 @@ const App = () => {
   const [incapacityStartDate, setIncapacityStartDate] = useState('');
   const [incapacityEndDate, setIncapacityEndDate] = useState('');
   
+  // ✅ VALIDACIÓN DE DÍAS vs FECHAS
+  const [daysError, setDaysError] = useState(null);
+  
+  // ✅ Calcular días entre fechas y validar
+  const calculatedDays = useMemo(() => {
+    if (!incapacityStartDate || !incapacityEndDate) return null;
+    const start = new Date(incapacityStartDate);
+    const end = new Date(incapacityEndDate);
+    // Diferencia en días (incluyendo ambos días)
+    const diffTime = end.getTime() - start.getTime();
+    const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24)) + 1;
+    return diffDays;
+  }, [incapacityStartDate, incapacityEndDate]);
+  
+  // ✅ Calcular fecha máxima permitida basándose en días de incapacidad
+  const maxEndDate = useMemo(() => {
+    if (!incapacityStartDate || !daysOfIncapacity) return null;
+    const start = new Date(incapacityStartDate);
+    const days = parseInt(daysOfIncapacity, 10);
+    if (isNaN(days) || days <= 0) return null;
+    // Fecha máxima = fecha inicio + (días - 1)
+    const maxDate = new Date(start);
+    maxDate.setDate(maxDate.getDate() + days - 1);
+    return maxDate.toISOString().split('T')[0];
+  }, [incapacityStartDate, daysOfIncapacity]);
+
   // ✅ VALIDACIÓN DE DUPLICADOS
   const [duplicateError, setDuplicateError] = useState(null);
   const [checkingDuplicate, setCheckingDuplicate] = useState(false);
@@ -229,6 +255,7 @@ const App = () => {
     setModoReenvio(false);
     setIncapacityStartDate('');
     setIncapacityEndDate('');
+    setDaysError(null);
     setDuplicateError(null);
     setCheckingDuplicate(false);
     setServerResponse(null); // ✅ NUEVO: resetear respuesta del servidor
@@ -1450,7 +1477,14 @@ const App = () => {
                   <ChevronLeftIcon className="h-5 w-5" />
                 </button>
               </div>
-              <p className="text-sm text-gray-600">Ingresa las fechas que indica el soporte de tu incapacidad.</p>
+              
+              {/* ✅ INDICADOR DE DÍAS REPORTADOS */}
+              {daysOfIncapacity && (
+                <div className="bg-blue-50 border border-blue-200 rounded-xl p-3 text-sm text-blue-800">
+                  <p className="font-medium">📋 Días de incapacidad reportados: <span className="font-bold">{daysOfIncapacity}</span></p>
+                  <p className="text-xs mt-1 text-blue-600">Las fechas deben coincidir con estos días</p>
+                </div>
+              )}
               
               <div>
                 <label htmlFor="startDate" className="block text-sm font-medium">
@@ -1460,7 +1494,12 @@ const App = () => {
                   type="date"
                   id="startDate"
                   value={incapacityStartDate}
-                  onChange={(e) => { setIncapacityStartDate(e.target.value); setDuplicateError(null); }}
+                  onChange={(e) => { 
+                    setIncapacityStartDate(e.target.value); 
+                    setIncapacityEndDate(''); // ✅ Resetear fecha final al cambiar inicio
+                    setDuplicateError(null);
+                    setDaysError(null);
+                  }}
                   className={`mt-1 block w-full rounded-xl border-0 p-3 shadow-sm focus:ring-2 sm:text-sm transition-colors ${currentTheme.input}`}
                 />
               </div>
@@ -1473,10 +1512,44 @@ const App = () => {
                   type="date"
                   id="endDate"
                   value={incapacityEndDate}
-                  onChange={(e) => { setIncapacityEndDate(e.target.value); setDuplicateError(null); }}
-                  className={`mt-1 block w-full rounded-xl border-0 p-3 shadow-sm focus:ring-2 sm:text-sm transition-colors ${currentTheme.input}`}
+                  min={incapacityStartDate || undefined}
+                  max={maxEndDate || undefined}
+                  onChange={(e) => { 
+                    setIncapacityEndDate(e.target.value); 
+                    setDuplicateError(null);
+                  }}
+                  disabled={!incapacityStartDate}
+                  className={`mt-1 block w-full rounded-xl border-0 p-3 shadow-sm focus:ring-2 sm:text-sm transition-colors ${currentTheme.input} ${!incapacityStartDate ? 'opacity-50 cursor-not-allowed' : ''}`}
                 />
+                {/* ✅ INFORMACIÓN DE FECHA MÁXIMA */}
+                {incapacityStartDate && maxEndDate && (
+                  <p className="text-xs text-gray-500 mt-1">
+                    Fecha máxima permitida: {new Date(maxEndDate + 'T12:00:00').toLocaleDateString('es-CO')}
+                  </p>
+                )}
               </div>
+              
+              {/* ✅ VALIDACIÓN DE DÍAS */}
+              {calculatedDays !== null && daysOfIncapacity && calculatedDays !== parseInt(daysOfIncapacity, 10) && (
+                <div className="bg-amber-50 border border-amber-300 rounded-xl p-4 text-sm text-amber-800">
+                  <p className="font-bold flex items-center gap-2">
+                    <ExclamationTriangleIcon className="h-5 w-5" />
+                    ⚠️ Las fechas no coinciden con los días reportados
+                  </p>
+                  <p className="mt-1">
+                    Reportaste <strong>{daysOfIncapacity}</strong> días, pero las fechas seleccionadas suman <strong>{calculatedDays}</strong> días.
+                  </p>
+                  <p className="mt-1 text-xs">Ajusta las fechas para que coincidan.</p>
+                </div>
+              )}
+              
+              {/* ✅ CONFIRMACIÓN DE DÍAS CORRECTOS */}
+              {calculatedDays !== null && daysOfIncapacity && calculatedDays === parseInt(daysOfIncapacity, 10) && (
+                <div className="bg-green-50 border border-green-300 rounded-xl p-3 text-sm text-green-800 flex items-center gap-2">
+                  <CheckCircleIcon className="h-5 w-5" />
+                  <span>✅ Fechas correctas: {calculatedDays} días coinciden con lo reportado</span>
+                </div>
+              )}
               
               {/* ✅ ALERTA DE DUPLICADO */}
               {duplicateError && (
@@ -1513,8 +1586,8 @@ const App = () => {
                     setCheckingDuplicate(false);
                     setStep(6);
                   }}
-                  disabled={!incapacityStartDate || !incapacityEndDate || checkingDuplicate}
-                  className={`w-full p-3 rounded-xl font-bold transition-colors duration-200 ${currentTheme.button} ${(!incapacityStartDate || !incapacityEndDate || checkingDuplicate) ? 'opacity-50 cursor-not-allowed' : ''}`}
+                  disabled={!incapacityStartDate || !incapacityEndDate || checkingDuplicate || (daysOfIncapacity && calculatedDays !== parseInt(daysOfIncapacity, 10))}
+                  className={`w-full p-3 rounded-xl font-bold transition-colors duration-200 ${currentTheme.button} ${(!incapacityStartDate || !incapacityEndDate || checkingDuplicate || (daysOfIncapacity && calculatedDays !== parseInt(daysOfIncapacity, 10))) ? 'opacity-50 cursor-not-allowed' : ''}`}
                 >
                   {checkingDuplicate ? 'Verificando...' : 'Siguiente'}
                 </button>
