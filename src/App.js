@@ -446,8 +446,9 @@ const App = () => {
     setUploadedFiles({});
     setSpecificFields({ births: '', motherWorks: null, isPhantomVehicle: null });
     
-    // Para certificados y prelicencias, ir directo al paso 5 (subir docs)
-    if (type === 'prelicencia' || type === 'certificado') {
+    // Solo prelicencia va directo a documentos (sin días/fechas)
+    // Certificado de hospitalización SÍ necesita días y fechas
+    if (type === 'prelicencia') {
       setStep(5);
     } else {
       setStep(4);
@@ -796,8 +797,11 @@ const App = () => {
 
   // Validación de campos del paso 4
   const isStep4Valid = () => {
-    if (incapacityType === 'prelicencia' || incapacityType === 'certificado') {
-      return true; // Siempre válido para estos tipos
+    if (incapacityType === 'prelicencia') {
+      return true; // Prelicencia no necesita datos adicionales
+    }
+    if (incapacityType === 'certificado') {
+      return daysOfIncapacity !== ''; // Certificado necesita días
     }
     if (incapacityType === 'maternity') {
       return specificFields.births !== '';
@@ -817,17 +821,41 @@ const App = () => {
 
   // Campos específicos según el tipo
   const renderSpecificFields = () => {
-    // Para prelicencia y certificado no hay campos específicos
-    if (incapacityType === 'prelicencia' || incapacityType === 'certificado') {
+    // Solo prelicencia no tiene campos específicos
+    if (incapacityType === 'prelicencia') {
       return (
         <div className={`p-4 rounded-xl ${currentTheme.info} text-center`}>
           <InformationCircleIcon className="h-8 w-8 mx-auto mb-2" />
           <p className="text-sm font-medium">
-            {incapacityType === 'prelicencia' 
-              ? 'Solo necesitas adjuntar la prelicencia de maternidad'
-              : 'Solo necesitas adjuntar el certificado de hospitalización'}
+            Solo necesitas adjuntar la prelicencia de maternidad
           </p>
         </div>
+      );
+    }
+    
+    // Certificado de hospitalización necesita días
+    if (incapacityType === 'certificado') {
+      return (
+        <motion.div
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.3 }}
+          className="space-y-4"
+        >
+          <div>
+            <label htmlFor="days" className="block text-sm font-medium">
+              Días de hospitalización
+            </label>
+            <input
+              type="number"
+              id="days"
+              value={daysOfIncapacity}
+              onChange={(e) => setDaysOfIncapacity(e.target.value)}
+              className={`mt-1 block w-full rounded-xl border-0 p-3 shadow-sm focus:ring-2 sm:text-sm transition-colors ${currentTheme.input}`}
+              placeholder="Ej: 5"
+            />
+          </div>
+        </motion.div>
       );
     }
 
@@ -1446,11 +1474,11 @@ const App = () => {
                   onClick={() => {
                     if (modoReenvio) {
                       handleFinalSubmit();
-                    } else if (incapacityType === 'prelicencia' || incapacityType === 'certificado') {
-                      // Para prelicencia y certificado, ir directo a correo
+                    } else if (incapacityType === 'prelicencia') {
+                      // Solo prelicencia va directo a correo (sin fechas)
                       setStep(6);
                     } else {
-                      // Para otras incapacidades, ir a fechas
+                      // Todas las demás (incluyendo certificado) van a paso de fechas
                       setStep(5.5);
                     }
                   }}
@@ -1574,7 +1602,7 @@ const App = () => {
                     setDuplicateError(null);
                     try {
                       const backendUrl = process.env.REACT_APP_BACKEND_URL || 'https://web-production-95ed.up.railway.app';
-                      const resp = await fetch(`${backendUrl}/verificar-duplicado?cedula=${cedula}&fecha_inicio=${incapacityStartDate}&fecha_fin=${incapacityEndDate}`);
+                      const resp = await fetch(`${backendUrl}/verificar-duplicado?cedula=${cedula}&fecha_inicio=${incapacityStartDate}&fecha_fin=${incapacityEndDate}&tipo=${incapacityType}`);
                       const data = await resp.json();
                       if (data.duplicado) {
                         setDuplicateError(data.mensaje);
@@ -1691,7 +1719,9 @@ const App = () => {
               <p className="text-sm opacity-80 mb-4">
                 {modoReenvio 
                   ? 'Tu caso será revisado nuevamente. Pronto nos comunicaremos contigo con los resultados.'
-                  : 'Hemos recibido tu solicitud. Pronto nos comunicaremos contigo.'}
+                  : (incapacityType === 'prelicencia' || incapacityType === 'certificado')
+                    ? 'Confirmo recibido. Quedamos atentos a la incapacidad correspondiente a la certificación enviada.'
+                    : 'Hemos recibido tu solicitud. Pronto nos comunicaremos contigo.'}
               </p>
               
               {/* ✅ Indicador de procesamiento mientras espera respuesta del servidor */}
