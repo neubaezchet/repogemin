@@ -1719,9 +1719,11 @@ const App = () => {
               <p className="text-sm opacity-80 mb-4">
                 {modoReenvio 
                   ? 'Tu caso será revisado nuevamente. Pronto nos comunicaremos contigo con los resultados.'
-                  : (incapacityType === 'prelicencia' || incapacityType === 'certificado')
-                    ? 'Confirmo recibido. Quedamos atentos a la incapacidad correspondiente a la certificación enviada.'
-                    : 'Hemos recibido tu solicitud. Pronto nos comunicaremos contigo.'}
+                  : incapacityType === 'prelicencia'
+                    ? 'Confirmo recibido. Quedamos atentos a la licencia correspondiente a la prelicencia enviada.'
+                    : incapacityType === 'certificado'
+                      ? 'Confirmo recibido. Quedamos atentos a la incapacidad correspondiente a la certificación enviada.'
+                      : 'Hemos recibido tu solicitud. Pronto nos comunicaremos contigo.'}
               </p>
               
               {/* ✅ Indicador de procesamiento mientras espera respuesta del servidor */}
