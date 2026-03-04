@@ -203,6 +203,7 @@ const App = () => {
   const [incapacityEndDate, setIncapacityEndDate] = useState('');
   
   // ✅ VALIDACIÓN DE DÍAS vs FECHAS
+  // eslint-disable-next-line no-unused-vars
   const [daysError, setDaysError] = useState(null);
   
   // ✅ Calcular días entre fechas y validar
