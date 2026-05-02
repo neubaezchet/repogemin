@@ -697,7 +697,7 @@ const App = () => {
   const getStepTitle = () => {
     switch (step) {
       case 1:
-        return 'Ingresa tu número de identificación';
+        return 'Introduce tu número de identificación';
       case 2:
         return 'Confirma tu identidad';
       case 2.5:
@@ -1188,7 +1188,7 @@ const App = () => {
                     value={cedula}
                     onChange={handleCedulaChange}
                     className={`mt-1 block w-full rounded-xl border-0 p-3 shadow-sm focus:ring-2 sm:text-sm transition-colors bg-[var(--bg-input)] border-[var(--border-input)] focus:border-[var(--border-focus)]`}
-                    placeholder="Escribe tu número de identificación"
+                    placeholder="Introduce tu número de identificación"
                   />
                 </div>
                 <button
