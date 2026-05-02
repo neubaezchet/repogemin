@@ -2,52 +2,202 @@
 @tailwind components;
 @tailwind utilities;
 
-body {
-  margin: 0;
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
-    'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
-    sans-serif;
+/* ═══════════════════════════════════════════
+   GOOGLE FONTS — Plus Jakarta Sans
+   ═══════════════════════════════════════════ */
+@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:ital,wght@0,300;0,400;0,500;0,600;0,700;0,800;1,400&display=swap');
+
+/* ═══════════════════════════════════════════
+   CSS CUSTOM PROPERTIES — THEME SYSTEM
+   Predeterminado: "Obsidian Dusk" (tierras, morados, azules, grises)
+   ═══════════════════════════════════════════ */
+:root {
+  /* === LIGHT MODE (default) === */
+  --bg-primary: #F8F6F4;
+  --bg-secondary: #EFECEA;
+  --bg-card: rgba(255, 255, 255, 0.82);
+  --bg-card-solid: #FFFFFF;
+  --bg-input: #F3F1EF;
+  --bg-input-focus: #FFFFFF;
+  --bg-hover: rgba(99, 89, 163, 0.06);
+
+  --text-primary: #1C1B1F;
+  --text-secondary: #49454F;
+  --text-tertiary: #79747E;
+  --text-muted: #AEAAB4;
+
+  --border-primary: rgba(0, 0, 0, 0.08);
+  --border-focus: #6359A3;
+  --border-input: rgba(0, 0, 0, 0.12);
+
+  --accent-primary: #6359A3;
+  --accent-primary-hover: #544A8F;
+  --accent-primary-soft: rgba(99, 89, 163, 0.12);
+  --accent-primary-text: #FFFFFF;
+
+  --accent-secondary: #2D8887;
+  --accent-secondary-hover: #247170;
+  --accent-secondary-soft: rgba(45, 136, 135, 0.10);
+
+  --success: #2E7D59;
+  --success-soft: rgba(46, 125, 89, 0.10);
+  --error: #BA1A1A;
+  --error-soft: rgba(186, 26, 26, 0.10);
+  --warning: #8B6914;
+  --warning-soft: rgba(139, 105, 20, 0.10);
+  --info: #4A6FA5;
+  --info-soft: rgba(74, 111, 165, 0.10);
+
+  --glass-bg: rgba(255, 255, 255, 0.72);
+  --glass-border: rgba(255, 255, 255, 0.3);
+  --glass-shadow: 0 8px 32px rgba(0, 0, 0, 0.08);
+
+  --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.06);
+  --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.08);
+  --shadow-lg: 0 12px 40px rgba(0, 0, 0, 0.12);
+
+  /* Vanta Nebula Colors */
+  --nebula-highlight: 0x6359A3;
+  --nebula-midtone: 0xE8E4DF;
+  --nebula-lowlight: 0xD5CFC8;
+  --nebula-base: 0xF8F6F4;
+}
+
+[data-theme="dark"] {
+  --bg-primary: #121018;
+  --bg-secondary: #1A1726;
+  --bg-card: rgba(35, 30, 50, 0.78);
+  --bg-card-solid: #1E1A2E;
+  --bg-input: #2A2540;
+  --bg-input-focus: #322C50;
+  --bg-hover: rgba(99, 89, 163, 0.12);
+
+  --text-primary: #ECE6F0;
+  --text-secondary: #CAC4D0;
+  --text-tertiary: #958DA5;
+  --text-muted: #6B6380;
+
+  --border-primary: rgba(255, 255, 255, 0.08);
+  --border-focus: #9B8FD4;
+  --border-input: rgba(255, 255, 255, 0.1);
+
+  --accent-primary: #9B8FD4;
+  --accent-primary-hover: #B0A5E0;
+  --accent-primary-soft: rgba(155, 143, 212, 0.15);
+  --accent-primary-text: #1C1B1F;
+
+  --accent-secondary: #4DB6AC;
+  --accent-secondary-hover: #66C9BF;
+  --accent-secondary-soft: rgba(77, 182, 172, 0.12);
+
+  --success: #66BB6A;
+  --success-soft: rgba(102, 187, 106, 0.12);
+  --error: #EF5350;
+  --error-soft: rgba(239, 83, 80, 0.12);
+  --warning: #FFB74D;
+  --warning-soft: rgba(255, 183, 77, 0.12);
+  --info: #64B5F6;
+  --info-soft: rgba(100, 181, 246, 0.12);
+
+  --glass-bg: rgba(30, 26, 46, 0.72);
+  --glass-border: rgba(255, 255, 255, 0.06);
+  --glass-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+
+  --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.2);
+  --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.3);
+  --shadow-lg: 0 12px 40px rgba(0, 0, 0, 0.4);
+
+  --nebula-highlight: 0x6359A3;
+  --nebula-midtone: 0x1A1726;
+  --nebula-lowlight: 0x121018;
+  --nebula-base: 0x0D0B14;
+}
+
+/* ═══════════════════════════════════════════
+   BASE STYLES
+   ═══════════════════════════════════════════ */
+* {
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
 
-code {
-  font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New',
-    monospace;
+body {
+  margin: 0;
+  font-family: 'Plus Jakarta Sans', 'Inter', system-ui, -apple-system, sans-serif;
+  background-color: var(--bg-primary);
+  color: var(--text-primary);
+  transition: background-color 0.4s ease, color 0.4s ease;
 }
 
-/* Custom styles for form radio buttons */
+::selection {
+  background: var(--accent-primary);
+  color: var(--accent-primary-text);
+}
+
+/* ═══════════════════════════════════════════
+   SCROLLBAR — Minimal iOS-style
+   ═══════════════════════════════════════════ */
+::-webkit-scrollbar { width: 5px; height: 5px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--text-muted); border-radius: 10px; }
+::-webkit-scrollbar-thumb:hover { background: var(--text-tertiary); }
+
+/* ═══════════════════════════════════════════
+   FORM RADIO BUTTONS — iOS Toggle Style
+   ═══════════════════════════════════════════ */
 input[type="radio"].form-radio {
   appearance: none;
   -webkit-appearance: none;
   -moz-appearance: none;
   display: inline-block;
   vertical-align: middle;
-  height: 1.25rem;
-  width: 1.25rem;
+  height: 22px;
+  width: 22px;
   border-radius: 9999px;
-  border-width: 1px;
-  border-color: #d1d5db; /* gray-300 */
-  background-color: #e5e7eb; /* gray-200 */
-  transition-property: background-color, border-color, box-shadow;
-  transition-duration: 150ms;
+  border: 2px solid var(--border-input);
+  background-color: var(--bg-input);
+  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+  cursor: pointer;
 }
 
 input[type="radio"].form-radio:checked {
-  background-color: #2563eb; /* blue-600 */
-  border-color: transparent;
+  background-color: var(--accent-primary);
+  border-color: var(--accent-primary);
   background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 16 16' fill='white' xmlns='http://www.w3.org/2000/svg'%3E%3Ccircle cx='8' cy='8' r='3'/%3E%3C/svg%3E");
   background-size: 100% 100%;
   background-position: center;
   background-repeat: no-repeat;
+  box-shadow: 0 0 0 3px var(--accent-primary-soft);
 }
 
 input[type="radio"].form-radio:focus {
-  outline: 2px solid transparent;
-  outline-offset: 2px;
-  box-shadow: 0 0 0 2px #bfdbfe; /* blue-200 */
+  outline: none;
+  box-shadow: 0 0 0 3px var(--accent-primary-soft);
 }
 
 input[type="radio"].form-radio:hover {
-  background-color: #60a5fa; /* blue-400 */
+  border-color: var(--accent-primary);
+}
+
+/* ═══════════════════════════════════════════
+   ANIMATIONS
+   ═══════════════════════════════════════════ */
+@keyframes shimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+
+.shimmer-loading {
+  background: linear-gradient(
+    90deg,
+    var(--bg-input) 25%,
+    var(--bg-hover) 50%,
+    var(--bg-input) 75%
+  );
+  background-size: 200% 100%;
+  animation: shimmer 1.5s infinite;
+}
+
+code {
+  font-family: 'SF Mono', 'Fira Code', 'Cascadia Code', monospace;
 }
