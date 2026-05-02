@@ -17,68 +17,116 @@ import {
   AtSymbolIcon,
   PhoneIcon,
   ExclamationTriangleIcon,
+  SunIcon,
+  MoonIcon,
 } from '@heroicons/react/24/solid';
 
-// Temas
-const themes = {
+// ═══════════════════════════════════════════════════════════
+// DESIGN SYSTEM — CSS Variable-based Professional Themes
+// All colors controlled by CSS custom properties in index.css
+// ═══════════════════════════════════════════════════════════
+
+// Vanta.js nebula config per theme mode
+const VANTA_CONFIG = {
   light: {
-    bg: 'bg-gray-50 text-gray-900',
-    cardBg: 'bg-white',
-    cardBorder: 'border-gray-200',
-    primary: 'bg-blue-600 text-white',
-    secondary: 'bg-blue-100 text-blue-800',
-    input: 'bg-gray-100 border-gray-300 focus:border-blue-500',
-    button: 'bg-blue-600 hover:bg-blue-700',
-    buttonOutline: 'bg-transparent text-gray-900 hover:bg-gray-100 border-gray-300',
-    icon: 'text-gray-500',
-    success: 'text-green-600 bg-green-100',
-    error: 'text-red-600 bg-red-100',
-    warning: 'text-amber-600 bg-amber-100',
-    info: 'text-blue-600 bg-blue-100',
-    dragActive: 'border-blue-500 bg-blue-50',
-    valid: 'text-green-600',
-    invalid: 'text-red-600',
-    iconBg: 'bg-blue-50 text-blue-600',
+    highlightColor: 0x6359A3,
+    midtoneColor: 0xE8E4DF,
+    lowlightColor: 0xD5CFC8,
+    baseColor: 0xF8F6F4,
+    blurFactor: 0.82,
+    speed: 1.20,
   },
   dark: {
-    bg: 'bg-gray-800 text-gray-50',
-    cardBg: 'bg-gray-900',
-    cardBorder: 'border-gray-700',
-    primary: 'bg-blue-600 text-white',
-    secondary: 'bg-blue-800 text-blue-100',
-    input: 'bg-gray-700 border-gray-600 focus:border-blue-500',
-    button: 'bg-blue-600 hover:bg-blue-700',
-    buttonOutline: 'bg-transparent text-gray-50 hover:bg-gray-700 border-gray-600',
-    icon: 'text-gray-400',
-    success: 'text-green-400 bg-green-900',
-    error: 'text-red-400 bg-red-900',
-    warning: 'text-amber-400 bg-amber-900',
-    info: 'text-blue-400 bg-blue-900',
-    dragActive: 'border-blue-500 bg-blue-900',
-    valid: 'text-green-400',
-    invalid: 'text-red-400',
-    iconBg: 'bg-blue-900 text-blue-400',
-  },
-  institutional: {
-    bg: 'bg-slate-50 text-gray-900',
-    cardBg: 'bg-white',
-    cardBorder: 'border-slate-300',
-    primary: 'bg-slate-700 text-white',
-    secondary: 'bg-slate-200 text-slate-800',
-    input: 'bg-slate-100 border-slate-300 focus:border-slate-600',
-    button: 'bg-slate-700 hover:bg-slate-800',
-    buttonOutline: 'bg-transparent text-gray-900 hover:bg-slate-100 border-slate-300',
-    icon: 'text-slate-500',
-    success: 'text-emerald-700 bg-emerald-100',
-    error: 'text-rose-700 bg-rose-100',
-    warning: 'text-amber-700 bg-amber-100',
-    info: 'text-slate-700 bg-slate-100',
-    dragActive: 'border-slate-600 bg-slate-50',
-    valid: 'text-emerald-700',
-    invalid: 'text-rose-700',
-    iconBg: 'bg-slate-100 text-slate-700',
+    highlightColor: 0x6359A3,
+    midtoneColor: 0x1A1726,
+    lowlightColor: 0x121018,
+    baseColor: 0x0D0B14,
+    blurFactor: 0.90,
+    speed: 1.00,
   },
 };
+
+// Step labels for the stepper
+const STEP_LABELS = [
+  { step: 1, label: 'Cédula' },
+  { step: 2, label: 'Identidad' },
+  { step: 3, label: 'Tipo' },
+  { step: 4, label: 'Detalles' },
+  { step: 5, label: 'Documentos' },
+  { step: 6, label: 'Contacto' },
+];
+
+// Stepper Component — iOS/Meta inspired
+const StepperProgress = ({ currentStep, totalSteps = 6 }) => {
+  const normalizedStep = Math.floor(currentStep);
+  const progress = Math.min((normalizedStep / totalSteps) * 100, 100);
+  
+  return (
+    <div className="w-full mb-6">
+      {/* Progress bar */}
+      <div className="relative h-1 rounded-full overflow-hidden" style={{ backgroundColor: 'var(--border-primary)' }}>
+        <motion.div
+          className="absolute inset-y-0 left-0 rounded-full"
+          style={{ background: 'linear-gradient(90deg, var(--accent-primary), var(--accent-secondary))' }}
+          initial={{ width: 0 }}
+          animate={{ width: `${progress}%` }}
+          transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
+        />
+      </div>
+      {/* Step dots */}
+      <div className="flex justify-between mt-3 px-0.5">
+        {STEP_LABELS.map(({ step, label }) => {
+          const isActive = normalizedStep >= step;
+          const isCurrent = normalizedStep === step;
+          return (
+            <div key={step} className="flex flex-col items-center gap-1.5">
+              <motion.div
+                className="w-2.5 h-2.5 rounded-full transition-all duration-300"
+                style={{
+                  backgroundColor: isActive ? 'var(--accent-primary)' : 'var(--border-primary)',
+                  boxShadow: isCurrent ? '0 0 0 4px var(--accent-primary-soft)' : 'none',
+                }}
+                animate={{ scale: isCurrent ? 1.3 : 1 }}
+                transition={{ duration: 0.3 }}
+              />
+              <span
+                className="text-[10px] font-medium transition-colors duration-300 hidden sm:block"
+                style={{ color: isActive ? 'var(--text-primary)' : 'var(--text-muted)' }}
+              >
+                {label}
+              </span>
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+};
+
+// Theme Toggle — iOS-style switch
+const ThemeToggle = ({ isDark, onToggle }) => (
+  <button
+    onClick={onToggle}
+    className="relative flex items-center gap-2 px-3 py-2 rounded-full transition-all duration-300"
+    style={{
+      backgroundColor: 'var(--bg-card)',
+      border: '1px solid var(--border-primary)',
+      backdropFilter: 'blur(12px)',
+      boxShadow: 'var(--shadow-sm)',
+    }}
+    title={isDark ? 'Modo claro' : 'Modo oscuro'}
+  >
+    <SunIcon className="w-4 h-4 transition-all duration-300" style={{ color: isDark ? 'var(--text-muted)' : '#F59E0B', opacity: isDark ? 0.4 : 1 }} />
+    <div className="relative w-8 h-4 rounded-full transition-colors duration-300" style={{ backgroundColor: isDark ? 'var(--accent-primary)' : 'var(--border-primary)' }}>
+      <motion.div
+        className="absolute top-0.5 w-3 h-3 rounded-full bg-white shadow-sm"
+        animate={{ x: isDark ? 17 : 1 }}
+        transition={{ duration: 0.3, ease: [0.16, 1, 0.3, 1] }}
+      />
+    </div>
+    <MoonIcon className="w-4 h-4 transition-all duration-300" style={{ color: isDark ? '#9B8FD4' : 'var(--text-muted)', opacity: isDark ? 1 : 0.4 }} />
+  </button>
+);
 
 // Documentos requeridos
 const documentRequirements = {
@@ -141,7 +189,7 @@ const validateImageQuality = async (file) => {
 };
 
 const App = () => {
-  const [theme, setTheme] = useState('light');
+  const [isDark, setIsDark] = useState(false);
   const [step, setStep] = useState(1);
   const [cedula, setCedula] = useState('');
   const [isCedulaValid, setIsCedulaValid] = useState(false);
@@ -167,9 +215,26 @@ const App = () => {
   const vantaRef = useRef(null);
   const vantaEffect = useRef(null);
 
-  // Vanta.js FOG – solo en step 1
+  // Toggle theme
+  const toggleTheme = useCallback(() => {
+    setIsDark(prev => {
+      const next = !prev;
+      document.documentElement.setAttribute('data-theme', next ? 'dark' : 'light');
+      return next;
+    });
+  }, []);
+
+  // Vanta.js FOG – solo en step 1, con colores del tema
   useEffect(() => {
-    if (step === 1 && !vantaEffect.current && window.VANTA) {
+    const mode = isDark ? 'dark' : 'light';
+    const config = VANTA_CONFIG[mode];
+    
+    if (step === 1 && window.VANTA) {
+      // Destroy existing before re-creating with new theme colors
+      if (vantaEffect.current) {
+        vantaEffect.current.destroy();
+        vantaEffect.current = null;
+      }
       vantaEffect.current = window.VANTA.FOG({
         el: vantaRef.current,
         THREE: window.THREE,
@@ -178,19 +243,19 @@ const App = () => {
         gyroControls: false,
         minHeight: 200.00,
         minWidth: 200.00,
-        highlightColor: 0x3d82a7,
-        midtoneColor: 0xffffff,
-        lowlightColor: 0xffffff,
-        baseColor: 0xe3aeae,
-        blurFactor: 0.90,
-        speed: 2.50,
+        highlightColor: config.highlightColor,
+        midtoneColor: config.midtoneColor,
+        lowlightColor: config.lowlightColor,
+        baseColor: config.baseColor,
+        blurFactor: config.blurFactor,
+        speed: config.speed,
       });
     }
     if (step !== 1 && vantaEffect.current) {
       vantaEffect.current.destroy();
       vantaEffect.current = null;
     }
-  }, [step]);
+  }, [step, isDark]);
   const [validatingFiles, setValidatingFiles] = useState({});
   const [serverResponse, setServerResponse] = useState(null); // ✅ NUEVO: guardar respuesta completa
   
@@ -233,7 +298,6 @@ const App = () => {
   const [duplicateError, setDuplicateError] = useState(null);
   const [checkingDuplicate, setCheckingDuplicate] = useState(false);
 
-  const currentTheme = themes[theme];
 
   const resetApp = () => {
     setStep(1);
@@ -556,7 +620,8 @@ const App = () => {
       // ✅ CORRECCIÓN 1: Timeout aumentado para Railway + n8n
       // (Railway puede tardar 60s + n8n 30s = 90s, usamos 95s de margen)
       const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 95000);
+      // Backend puede tardar (merge PDF + GLM-OCR hasta ~60s + Drive + correo)
+      const timeoutId = setTimeout(() => controller.abort(), 130000);
       
       const response = await fetch(endpoint, {
         method: 'POST',
@@ -745,8 +810,8 @@ const App = () => {
             {...getRootProps({
               className: `p-6 rounded-2xl border-2 border-dashed transition-all duration-300 cursor-pointer ${
                 isDragActive
-                  ? currentTheme.dragActive
-                  : `${currentTheme.cardBorder} hover:border-blue-500`
+                  ? 'border-[var(--accent-primary)] bg-[var(--accent-primary-soft)]'
+                  : 'border-[var(--border-primary)] hover:border-[var(--accent-primary)]'
               }`,
             })}
           >
@@ -761,7 +826,7 @@ const App = () => {
               </div>
             ) : (
               <>
-                <CloudArrowUpIcon className={`mx-auto h-8 w-8 ${currentTheme.icon}`} />
+                <CloudArrowUpIcon className={`mx-auto h-8 w-8 text-[var(--text-tertiary)]`} />
                 <p className="mt-2 text-xs text-center">
                   Arrastra o haz clic para subir el archivo
                 </p>
@@ -777,7 +842,7 @@ const App = () => {
     const docs = getRequiredDocs;
     if (docs.length === 0) {
       return (
-        <div className={`p-4 rounded-xl ${currentTheme.info} text-center`}>
+        <div className={`p-4 rounded-xl bg-[var(--info-soft)] text-[var(--info)] text-center`}>
           <InformationCircleIcon className="h-8 w-8 mx-auto mb-2" />
           <p className="text-sm">
             Completa la información de tu incapacidad para ver los documentos requeridos.
@@ -824,7 +889,7 @@ const App = () => {
     // Solo prelicencia no tiene campos específicos
     if (incapacityType === 'prelicencia') {
       return (
-        <div className={`p-4 rounded-xl ${currentTheme.info} text-center`}>
+        <div className={`p-4 rounded-xl bg-[var(--info-soft)] text-[var(--info)] text-center`}>
           <InformationCircleIcon className="h-8 w-8 mx-auto mb-2" />
           <p className="text-sm font-medium">
             Solo necesitas adjuntar la prelicencia de maternidad
@@ -851,7 +916,7 @@ const App = () => {
               id="days"
               value={daysOfIncapacity}
               onChange={(e) => setDaysOfIncapacity(e.target.value)}
-              className={`mt-1 block w-full rounded-xl border-0 p-3 shadow-sm focus:ring-2 sm:text-sm transition-colors ${currentTheme.input}`}
+              className={`mt-1 block w-full rounded-xl border-0 p-3 shadow-sm focus:ring-2 sm:text-sm transition-colors bg-[var(--bg-input)] border-[var(--border-input)] focus:border-[var(--border-focus)]`}
               placeholder="Ej: 5"
             />
           </div>
@@ -875,7 +940,7 @@ const App = () => {
             onChange={(e) =>
               setSpecificFields({ ...specificFields, births: e.target.value })
             }
-            className={`mt-1 block w-full rounded-xl border-0 p-3 shadow-sm focus:ring-2 sm:text-sm transition-colors ${currentTheme.input}`}
+            className={`mt-1 block w-full rounded-xl border-0 p-3 shadow-sm focus:ring-2 sm:text-sm transition-colors bg-[var(--bg-input)] border-[var(--border-input)] focus:border-[var(--border-focus)]`}
             placeholder="Ej: 1"
           />
         </div>
@@ -941,7 +1006,7 @@ const App = () => {
             id="subType"
             value={subType || ''}
             onChange={handleSubTypeChange}
-            className={`mt-1 block w-full rounded-xl border-0 p-3 shadow-sm focus:ring-2 sm:text-sm transition-colors ${currentTheme.input}`}
+            className={`mt-1 block w-full rounded-xl border-0 p-3 shadow-sm focus:ring-2 sm:text-sm transition-colors bg-[var(--bg-input)] border-[var(--border-input)] focus:border-[var(--border-focus)]`}
           >
             <option value="" disabled>Selecciona una opción</option>
             <option value="general">Enfermedad general o especial</option>
@@ -962,7 +1027,7 @@ const App = () => {
               id="days"
               value={daysOfIncapacity}
               onChange={(e) => setDaysOfIncapacity(e.target.value)}
-              className={`mt-1 block w-full rounded-xl border-0 p-3 shadow-sm focus:ring-2 sm:text-sm transition-colors ${currentTheme.input}`}
+              className={`mt-1 block w-full rounded-xl border-0 p-3 shadow-sm focus:ring-2 sm:text-sm transition-colors bg-[var(--bg-input)] border-[var(--border-input)] focus:border-[var(--border-focus)]`}
               placeholder="Ej: 5"
             />
           </div>
@@ -1035,22 +1100,30 @@ const App = () => {
   return (
     <div
       ref={vantaRef}
-      className={`min-h-screen p-4 sm:p-8 flex items-center justify-center transition-colors duration-300 ${currentTheme.bg}`}
+      className="min-h-screen p-4 sm:p-8 flex items-center justify-center transition-colors duration-500"
+      style={{ backgroundColor: 'var(--bg-primary)', color: 'var(--text-primary)' }}
     >
       {apiError && (
         <AnimatePresence>
           <motion.div
-            initial={{ opacity: 0, y: -50 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -50 }}
-            transition={{ duration: 0.3 }}
-            className={`fixed top-4 left-1/2 -translate-x-1/2 max-w-sm w-full p-4 rounded-xl shadow-lg ${currentTheme.error} flex items-center gap-3 z-50`}
+            initial={{ opacity: 0, y: -50, scale: 0.95 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: -50, scale: 0.95 }}
+            transition={{ duration: 0.35, ease: [0.16, 1, 0.3, 1] }}
+            className="fixed top-4 left-1/2 -translate-x-1/2 max-w-sm w-full p-4 rounded-ios flex items-center gap-3 z-50"
+            style={{
+              backgroundColor: 'var(--error-soft)',
+              color: 'var(--error)',
+              border: '1px solid var(--error)',
+              backdropFilter: 'blur(16px)',
+              boxShadow: 'var(--shadow-lg)',
+            }}
           >
-            <ExclamationCircleIcon className="h-6 w-6" />
+            <ExclamationCircleIcon className="h-5 w-5 flex-shrink-0" />
             <span className="font-medium text-sm">{apiError}</span>
             <button
               onClick={() => setApiError(null)}
-              className="ml-auto p-1 rounded-full hover:bg-white/20 transition-colors"
+              className="ml-auto p-1 rounded-full hover:opacity-70 transition-opacity"
             >
               <XMarkIcon className="h-4 w-4" />
             </button>
@@ -1058,27 +1131,42 @@ const App = () => {
         </AnimatePresence>
       )}
 
-      <div className="absolute top-4 right-4" style={{ zIndex: 1 }}>
-        <select
-          value={theme}
-          onChange={(e) => setTheme(e.target.value)}
-          className={`p-2 rounded-xl border-0 shadow-sm sm:text-sm transition-all ${currentTheme.input}`}
-        >
-          <option value="light">Claro</option>
-          <option value="dark">Oscuro</option>
-          <option value="institutional">Institucional</option>
-        </select>
+      {/* Theme Toggle — Top Right */}
+      <div className="absolute top-4 right-4" style={{ zIndex: 2 }}>
+        <ThemeToggle isDark={isDark} onToggle={toggleTheme} />
       </div>
 
       <motion.div
         layout
-        className={`w-full max-w-xl p-8 rounded-3xl shadow-xl transition-colors duration-300 ${currentTheme.cardBg} ${currentTheme.cardBorder} border`}
-        style={{ position: 'relative', zIndex: 1 }}
+        className="w-full max-w-xl rounded-ios-xl overflow-hidden transition-all duration-500"
+        style={{
+          position: 'relative',
+          zIndex: 1,
+          backgroundColor: 'var(--glass-bg)',
+          border: '1px solid var(--glass-border)',
+          backdropFilter: 'blur(24px)',
+          WebkitBackdropFilter: 'blur(24px)',
+          boxShadow: 'var(--glass-shadow)',
+        }}
       >
-        <h1 className="text-3xl font-bold mb-2 text-center">{getStepTitle()}</h1>
-        <p className="text-center text-sm mb-8 opacity-70">
-          Un portal moderno y eficiente para gestionar tus incapacidades.
-        </p>
+        {/* Card inner with padding */}
+        <div className="p-8">
+          {/* Stepper Progress */}
+          {!submissionComplete && <StepperProgress currentStep={step} />}
+
+          {/* Title */}
+          <h1
+            className="text-2xl sm:text-3xl font-bold mb-1 text-center"
+            style={{ color: 'var(--text-primary)' }}
+          >
+            {getStepTitle()}
+          </h1>
+          <p
+            className="text-center text-sm mb-8 font-medium"
+            style={{ color: 'var(--text-tertiary)' }}
+          >
+            Portal empresarial de gestión de incapacidades
+          </p>
 
         <AnimatePresence mode="wait">
           {step === 1 && (
@@ -1099,14 +1187,14 @@ const App = () => {
                     id="cedula"
                     value={cedula}
                     onChange={handleCedulaChange}
-                    className={`mt-1 block w-full rounded-xl border-0 p-3 shadow-sm focus:ring-2 sm:text-sm transition-colors ${currentTheme.input}`}
+                    className={`mt-1 block w-full rounded-xl border-0 p-3 shadow-sm focus:ring-2 sm:text-sm transition-colors bg-[var(--bg-input)] border-[var(--border-input)] focus:border-[var(--border-focus)]`}
                     placeholder="Escribe tu número de identificación"
                   />
                 </div>
                 <button
                   type="submit"
                   disabled={!isCedulaValid || isSubmitting}
-                  className={`w-full p-3 rounded-xl font-bold transition-colors duration-200 ${currentTheme.button} ${(!isCedulaValid || isSubmitting) ? 'opacity-50 cursor-not-allowed' : ''}`}
+                  className={`w-full p-3 rounded-xl font-bold transition-colors duration-200 bg-[var(--accent-primary)] hover:bg-[var(--accent-primary-hover)] text-white ${(!isCedulaValid || isSubmitting) ? 'opacity-50 cursor-not-allowed' : ''}`}
                 >
                   {isSubmitting ? (
                     <>
@@ -1279,7 +1367,7 @@ const App = () => {
                   
                   <button
                     onClick={resetApp}
-                    className={`w-full p-3 rounded-xl font-bold border transition-colors ${currentTheme.buttonOutline}`}
+                    className={`w-full p-3 rounded-xl font-bold border transition-colors bg-transparent border-[var(--border-primary)] hover:bg-[var(--bg-hover)] text-[var(--text-secondary)]`}
                   >
                     Cancelar
                   </button>
@@ -1296,7 +1384,7 @@ const App = () => {
               exit={{ opacity: 0, y: -20 }}
               transition={{ duration: 0.2 }}
             >
-              <div className={`p-6 rounded-2xl ${currentTheme.info} text-center`}>
+              <div className={`p-6 rounded-2xl bg-[var(--info-soft)] text-[var(--info)] text-center`}>
                 <UserCircleIcon className="h-16 w-16 mx-auto mb-4" />
                 <h3 className="font-bold text-lg mb-2">¿Eres {userName}?</h3>
                 <p className="text-sm">Identificado con CC {cedula} y vinculado a {userCompany}.</p>
@@ -1304,13 +1392,13 @@ const App = () => {
               <div className="flex gap-4 mt-6">
                 <button
                   onClick={() => handleConfirmUser(false)}
-                  className={`w-full p-3 rounded-xl font-bold border transition-colors ${currentTheme.buttonOutline}`}
+                  className={`w-full p-3 rounded-xl font-bold border transition-colors bg-transparent border-[var(--border-primary)] hover:bg-[var(--bg-hover)] text-[var(--text-secondary)]`}
                 >
                   No
                 </button>
                 <button
                   onClick={() => handleConfirmUser(true)}
-                  className={`w-full p-3 rounded-xl font-bold transition-colors ${currentTheme.button}`}
+                  className={`w-full p-3 rounded-xl font-bold transition-colors bg-[var(--accent-primary)] hover:bg-[var(--accent-primary-hover)] text-white`}
                 >
                   Sí
                 </button>
@@ -1332,9 +1420,9 @@ const App = () => {
                   whileHover={{ scale: 1.05 }}
                   whileTap={{ scale: 0.95 }}
                   onClick={() => handleIncapacityType('maternity')}
-                  className={`flex flex-col items-center p-6 rounded-2xl transition-colors ${currentTheme.secondary} hover:ring-2 ring-blue-500`}
+                  className={`flex flex-col items-center p-6 rounded-2xl transition-colors bg-[var(--accent-primary-soft)] text-[var(--text-primary)] hover:ring-2 ring-blue-500`}
                 >
-                  <div className={`p-4 rounded-full ${currentTheme.iconBg}`}>
+                  <div className={`p-4 rounded-full bg-[var(--accent-primary-soft)] text-[var(--accent-primary)]`}>
                     <HeartIcon className="h-8 w-8 text-blue-600" />
                   </div>
                   <span className="mt-2 text-xs text-center font-medium">Maternidad</span>
@@ -1343,9 +1431,9 @@ const App = () => {
                   whileHover={{ scale: 1.05 }}
                   whileTap={{ scale: 0.95 }}
                   onClick={() => handleIncapacityType('paternity')}
-                  className={`flex flex-col items-center p-6 rounded-2xl transition-colors ${currentTheme.secondary} hover:ring-2 ring-blue-500`}
+                  className={`flex flex-col items-center p-6 rounded-2xl transition-colors bg-[var(--accent-primary-soft)] text-[var(--text-primary)] hover:ring-2 ring-blue-500`}
                 >
-                  <div className={`p-4 rounded-full ${currentTheme.iconBg}`}>
+                  <div className={`p-4 rounded-full bg-[var(--accent-primary-soft)] text-[var(--accent-primary)]`}>
                     <UserIcon className="h-8 w-8 text-blue-600" />
                   </div>
                   <span className="mt-2 text-xs text-center font-medium">Paternidad</span>
@@ -1354,9 +1442,9 @@ const App = () => {
                   whileHover={{ scale: 1.05 }}
                   whileTap={{ scale: 0.95 }}
                   onClick={() => handleIncapacityType('other')}
-                  className={`flex flex-col items-center p-6 rounded-2xl transition-colors ${currentTheme.secondary} hover:ring-2 ring-blue-500`}
+                  className={`flex flex-col items-center p-6 rounded-2xl transition-colors bg-[var(--accent-primary-soft)] text-[var(--text-primary)] hover:ring-2 ring-blue-500`}
                 >
-                  <div className={`p-4 rounded-full ${currentTheme.iconBg}`}>
+                  <div className={`p-4 rounded-full bg-[var(--accent-primary-soft)] text-[var(--accent-primary)]`}>
                     <ClipboardDocumentListIcon className="h-8 w-8 text-blue-600" />
                   </div>
                   <span className="mt-2 text-xs text-center font-medium">Otro tipo</span>
@@ -1367,9 +1455,9 @@ const App = () => {
                   whileHover={{ scale: 1.05 }}
                   whileTap={{ scale: 0.95 }}
                   onClick={() => handleIncapacityType('prelicencia')}
-                  className={`flex flex-col items-center p-6 rounded-2xl transition-colors ${currentTheme.secondary} hover:ring-2 ring-blue-500`}
+                  className={`flex flex-col items-center p-6 rounded-2xl transition-colors bg-[var(--accent-primary-soft)] text-[var(--text-primary)] hover:ring-2 ring-blue-500`}
                 >
-                  <div className={`p-4 rounded-full ${currentTheme.iconBg}`}>
+                  <div className={`p-4 rounded-full bg-[var(--accent-primary-soft)] text-[var(--accent-primary)]`}>
                     <ClipboardDocumentListIcon className="h-8 w-8 text-purple-600" />
                   </div>
                   <span className="mt-2 text-xs text-center font-medium">Prelicencia Maternidad</span>
@@ -1380,9 +1468,9 @@ const App = () => {
                   whileHover={{ scale: 1.05 }}
                   whileTap={{ scale: 0.95 }}
                   onClick={() => handleIncapacityType('certificado')}
-                  className={`flex flex-col items-center p-6 rounded-2xl transition-colors ${currentTheme.secondary} hover:ring-2 ring-blue-500`}
+                  className={`flex flex-col items-center p-6 rounded-2xl transition-colors bg-[var(--accent-primary-soft)] text-[var(--text-primary)] hover:ring-2 ring-blue-500`}
                 >
-                  <div className={`p-4 rounded-full ${currentTheme.iconBg}`}>
+                  <div className={`p-4 rounded-full bg-[var(--accent-primary-soft)] text-[var(--accent-primary)]`}>
                     <ClipboardDocumentListIcon className="h-8 w-8 text-green-600" />
                   </div>
                   <span className="mt-2 text-xs text-center font-medium">Certificado Hospitalización</span>
@@ -1402,7 +1490,7 @@ const App = () => {
             >
               <div className="flex justify-between items-center">
                 <h2 className="text-xl font-bold">Detalla la información</h2>
-                <button onClick={() => setStep(3)} className={`p-2 rounded-full ${currentTheme.buttonOutline}`}>
+                <button onClick={() => setStep(3)} className={`p-2 rounded-full bg-transparent border-[var(--border-primary)] hover:bg-[var(--bg-hover)] text-[var(--text-secondary)]`}>
                   <ChevronLeftIcon className="h-5 w-5" />
                 </button>
               </div>
@@ -1410,14 +1498,14 @@ const App = () => {
               <div className="flex gap-4 mt-8">
                 <button
                   onClick={() => setStep(3)}
-                  className={`w-full p-3 rounded-xl font-bold border transition-colors ${currentTheme.buttonOutline}`}
+                  className={`w-full p-3 rounded-xl font-bold border transition-colors bg-transparent border-[var(--border-primary)] hover:bg-[var(--bg-hover)] text-[var(--text-secondary)]`}
                 >
                   Atrás
                 </button>
                 <button
                   onClick={() => setStep(5)}
                   disabled={!isStep4Valid()}
-                  className={`w-full p-3 rounded-xl font-bold transition-colors duration-200 ${currentTheme.button} ${!isStep4Valid() ? 'opacity-50 cursor-not-allowed' : ''}`}
+                  className={`w-full p-3 rounded-xl font-bold transition-colors duration-200 bg-[var(--accent-primary)] hover:bg-[var(--accent-primary-hover)] text-white ${!isStep4Valid() ? 'opacity-50 cursor-not-allowed' : ''}`}
                 >
                   Siguiente
                 </button>
@@ -1440,7 +1528,7 @@ const App = () => {
                 </h2>
                 <button 
                   onClick={() => modoReenvio ? setStep(2.5) : setStep(4)} 
-                  className={`p-2 rounded-full ${currentTheme.buttonOutline}`}
+                  className={`p-2 rounded-full bg-transparent border-[var(--border-primary)] hover:bg-[var(--bg-hover)] text-[var(--text-secondary)]`}
                 >
                   <ChevronLeftIcon className="h-5 w-5" />
                 </button>
@@ -1466,7 +1554,7 @@ const App = () => {
               <div className="flex gap-4 mt-8">
                 <button
                   onClick={() => modoReenvio ? setStep(2.5) : setStep(4)}
-                  className={`w-full p-3 rounded-xl font-bold border transition-colors ${currentTheme.buttonOutline}`}
+                  className={`w-full p-3 rounded-xl font-bold border transition-colors bg-transparent border-[var(--border-primary)] hover:bg-[var(--bg-hover)] text-[var(--text-secondary)]`}
                 >
                   Atrás
                 </button>
@@ -1483,7 +1571,7 @@ const App = () => {
                     }
                   }}
                   disabled={!isSubmissionReady}
-                  className={`w-full p-3 rounded-xl font-bold transition-colors duration-200 ${currentTheme.button} ${!isSubmissionReady ? 'opacity-50 cursor-not-allowed' : ''}`}
+                  className={`w-full p-3 rounded-xl font-bold transition-colors duration-200 bg-[var(--accent-primary)] hover:bg-[var(--accent-primary-hover)] text-white ${!isSubmissionReady ? 'opacity-50 cursor-not-allowed' : ''}`}
                 >
                   {modoReenvio ? 'Enviar y completar' : 'Siguiente'}
                 </button>
@@ -1502,7 +1590,7 @@ const App = () => {
             >
               <div className="flex justify-between items-center">
                 <h2 className="text-xl font-bold">Fechas de la incapacidad</h2>
-                <button onClick={() => setStep(5)} className={`p-2 rounded-full ${currentTheme.buttonOutline}`}>
+                <button onClick={() => setStep(5)} className={`p-2 rounded-full bg-transparent border-[var(--border-primary)] hover:bg-[var(--bg-hover)] text-[var(--text-secondary)]`}>
                   <ChevronLeftIcon className="h-5 w-5" />
                 </button>
               </div>
@@ -1529,7 +1617,7 @@ const App = () => {
                     setDuplicateError(null);
                     setDaysError(null);
                   }}
-                  className={`mt-1 block w-full rounded-xl border-0 p-3 shadow-sm focus:ring-2 sm:text-sm transition-colors ${currentTheme.input}`}
+                  className={`mt-1 block w-full rounded-xl border-0 p-3 shadow-sm focus:ring-2 sm:text-sm transition-colors bg-[var(--bg-input)] border-[var(--border-input)] focus:border-[var(--border-focus)]`}
                 />
               </div>
               
@@ -1548,7 +1636,7 @@ const App = () => {
                     setDuplicateError(null);
                   }}
                   disabled={!incapacityStartDate}
-                  className={`mt-1 block w-full rounded-xl border-0 p-3 shadow-sm focus:ring-2 sm:text-sm transition-colors ${currentTheme.input} ${!incapacityStartDate ? 'opacity-50 cursor-not-allowed' : ''}`}
+                  className={`mt-1 block w-full rounded-xl border-0 p-3 shadow-sm focus:ring-2 sm:text-sm transition-colors bg-[var(--bg-input)] border-[var(--border-input)] focus:border-[var(--border-focus)] ${!incapacityStartDate ? 'opacity-50 cursor-not-allowed' : ''}`}
                 />
                 {/* ✅ INFORMACIÓN DE FECHA MÁXIMA */}
                 {incapacityStartDate && maxEndDate && (
@@ -1591,7 +1679,7 @@ const App = () => {
               <div className="flex gap-4 mt-8">
                 <button
                   onClick={() => setStep(5)}
-                  className={`w-full p-3 rounded-xl font-bold border transition-colors ${currentTheme.buttonOutline}`}
+                  className={`w-full p-3 rounded-xl font-bold border transition-colors bg-transparent border-[var(--border-primary)] hover:bg-[var(--bg-hover)] text-[var(--text-secondary)]`}
                 >
                   Atrás
                 </button>
@@ -1616,7 +1704,7 @@ const App = () => {
                     setStep(6);
                   }}
                   disabled={!incapacityStartDate || !incapacityEndDate || checkingDuplicate || (daysOfIncapacity && calculatedDays !== parseInt(daysOfIncapacity, 10))}
-                  className={`w-full p-3 rounded-xl font-bold transition-colors duration-200 ${currentTheme.button} ${(!incapacityStartDate || !incapacityEndDate || checkingDuplicate || (daysOfIncapacity && calculatedDays !== parseInt(daysOfIncapacity, 10))) ? 'opacity-50 cursor-not-allowed' : ''}`}
+                  className={`w-full p-3 rounded-xl font-bold transition-colors duration-200 bg-[var(--accent-primary)] hover:bg-[var(--accent-primary-hover)] text-white ${(!incapacityStartDate || !incapacityEndDate || checkingDuplicate || (daysOfIncapacity && calculatedDays !== parseInt(daysOfIncapacity, 10))) ? 'opacity-50 cursor-not-allowed' : ''}`}
                 >
                   {checkingDuplicate ? 'Verificando...' : 'Siguiente'}
                 </button>
@@ -1635,7 +1723,7 @@ const App = () => {
             >
               <div className="flex justify-between items-center">
                 <h2 className="text-xl font-bold">Información de contacto</h2>
-                <button onClick={() => setStep(5)} className={`p-2 rounded-full ${currentTheme.buttonOutline}`}>
+                <button onClick={() => setStep(5)} className={`p-2 rounded-full bg-transparent border-[var(--border-primary)] hover:bg-[var(--bg-hover)] text-[var(--text-secondary)]`}>
                   <ChevronLeftIcon className="h-5 w-5" />
                 </button>
               </div>
@@ -1645,14 +1733,14 @@ const App = () => {
                 </label>
                 <div className="relative mt-1 rounded-xl shadow-sm">
                   <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
-                    <AtSymbolIcon className={`h-5 w-5 ${currentTheme.icon}`} aria-hidden="true" />
+                    <AtSymbolIcon className={`h-5 w-5 text-[var(--text-tertiary)]`} aria-hidden="true" />
                   </div>
                   <input
                     type="email"
                     id="email"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
-                    className={`block w-full rounded-xl border-0 p-3 pl-10 focus:ring-2 sm:text-sm transition-colors ${currentTheme.input}`}
+                    className={`block w-full rounded-xl border-0 p-3 pl-10 focus:ring-2 sm:text-sm transition-colors bg-[var(--bg-input)] border-[var(--border-input)] focus:border-[var(--border-focus)]`}
                     placeholder="tucorreo@ejemplo.com"
                   />
                 </div>
@@ -1663,14 +1751,14 @@ const App = () => {
                 </label>
                 <div className="relative mt-1 rounded-xl shadow-sm">
                   <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
-                    <PhoneIcon className={`h-5 w-5 ${currentTheme.icon}`} aria-hidden="true" />
+                    <PhoneIcon className={`h-5 w-5 text-[var(--text-tertiary)]`} aria-hidden="true" />
                   </div>
                   <input
                     type="tel"
                     id="phoneNumber"
                     value={phoneNumber}
                     onChange={(e) => setPhoneNumber(e.target.value)}
-                    className={`block w-full rounded-xl border-0 p-3 pl-10 focus:ring-2 sm:text-sm transition-colors ${currentTheme.input}`}
+                    className={`block w-full rounded-xl border-0 p-3 pl-10 focus:ring-2 sm:text-sm transition-colors bg-[var(--bg-input)] border-[var(--border-input)] focus:border-[var(--border-focus)]`}
                     placeholder="300 123 4567"
                   />
                 </div>
@@ -1678,14 +1766,14 @@ const App = () => {
               <div className="flex gap-4 mt-8">
                 <button
                   onClick={() => setStep(5)}
-                  className={`w-full p-3 rounded-xl font-bold border transition-colors ${currentTheme.buttonOutline}`}
+                  className={`w-full p-3 rounded-xl font-bold border transition-colors bg-transparent border-[var(--border-primary)] hover:bg-[var(--bg-hover)] text-[var(--text-secondary)]`}
                 >
                   Atrás
                 </button>
                 <button
                   onClick={handleFinalSubmit}
                   disabled={!email || !phoneNumber || isSubmitting}
-                  className={`w-full p-3 rounded-xl font-bold transition-colors duration-200 ${currentTheme.button} ${(!email || !phoneNumber || isSubmitting) ? 'opacity-50 cursor-not-allowed' : ''}`}
+                  className={`w-full p-3 rounded-xl font-bold transition-colors duration-200 bg-[var(--accent-primary)] hover:bg-[var(--accent-primary-hover)] text-white ${(!email || !phoneNumber || isSubmitting) ? 'opacity-50 cursor-not-allowed' : ''}`}
                 >
                   {isSubmitting ? (
                     <>
@@ -1712,7 +1800,7 @@ const App = () => {
               transition={{ duration: 0.2 }}
               className="text-center"
             >
-              <CheckCircleIcon className={`h-16 w-16 mx-auto mb-4 ${currentTheme.success}`} />
+              <CheckCircleIcon className={`h-16 w-16 mx-auto mb-4 text-[var(--success)] bg-[var(--success-soft)]`} />
               <h2 className="text-2xl font-bold mb-2">
                 {modoReenvio ? 'Documentos completados con éxito' : 'Solicitud enviada con éxito'}
               </h2>
@@ -1761,16 +1849,33 @@ const App = () => {
                   </div>
                 </div>
               )}
+
+              {serverResponse?.ocr_glm?.exito && serverResponse?.ocr_glm?.texto_preview && (
+                <div className="mb-4 p-3 text-left rounded-lg border border-slate-200 dark:border-slate-600 bg-slate-50 dark:bg-slate-800/50">
+                  <p className="text-xs font-semibold mb-1 opacity-90">
+                    Texto reconocido en documentos (vista previa)
+                  </p>
+                  <p className="text-xs opacity-80 whitespace-pre-wrap max-h-40 overflow-y-auto font-mono">
+                    {serverResponse.ocr_glm.texto_preview}
+                  </p>
+                  {serverResponse.ocr_glm.paginas > 0 && (
+                    <p className="text-xs opacity-60 mt-2">
+                      Páginas procesadas: {serverResponse.ocr_glm.paginas}
+                    </p>
+                  )}
+                </div>
+              )}
               
               <button
                 onClick={resetApp}
-                className={`w-full p-3 rounded-xl font-bold transition-colors ${currentTheme.button}`}
+                className={`w-full p-3 rounded-xl font-bold transition-colors bg-[var(--accent-primary)] hover:bg-[var(--accent-primary-hover)] text-white`}
               >
                 Volver al inicio
               </button>
             </motion.div>
           )}
         </AnimatePresence>
+        </div>{/* close p-8 */}
       </motion.div>
     </div>
   );
