@@ -48,7 +48,7 @@ const VANTA_CONFIG = {
 
 // Step labels for the stepper
 const STEP_LABELS = [
-  { step: 1, label: 'Cédula' },
+  { step: 1, label: 'Número de identificación' },
   { step: 2, label: 'Identidad' },
   { step: 3, label: 'Tipo' },
   { step: 4, label: 'Detalles' },
@@ -697,7 +697,7 @@ const App = () => {
   const getStepTitle = () => {
     switch (step) {
       case 1:
-        return 'Ingresa tu número de cédula';
+        return 'Ingresa tu número de identificación';
       case 2:
         return 'Confirma tu identidad';
       case 2.5:
