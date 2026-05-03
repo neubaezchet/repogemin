@@ -35,9 +35,23 @@ const ESTANDARES = {
 };
 
 /**
- * Analiza calidad de imagen con métricas profesionales
+ * ✅ NUEVO: Estándares FLEXIBLES para Mistral OCR
+ * Acepta calidad media-baja siempre que sea legible
  */
-const analizarImagen = async (file) => {
+const ESTANDARES_MISTRAL = {
+  RESOLUCION_MINIMA: 600,        // Más flexible
+  NITIDEZ_MINIMA: 25,            // Baja para documentos borrosos
+  CONTRASTE_MINIMO: 0.30,        // Muy flexible
+  RUIDO_MAXIMO: 0.70,            // Tolera ruido
+  TAMANO_MINIMO_KB: 40,          // Más flexible
+};
+
+/**
+ * Analiza calidad de imagen con métricas profesionales
+ * @param {File} file - Archivo a analizar
+ * @param {Boolean} paraOCR - Si es true, usa estándares más flexibles para Mistral
+ */
+const analizarImagen = async (file, paraOCR = false) => {
   return new Promise((resolve) => {
     const img = new Image();
     const url = URL.createObjectURL(file);
@@ -100,33 +114,36 @@ const analizarImagen = async (file) => {
         const problemas = [];
         let esValido = true;
 
+        // ✅ Seleccionar estándares según modo
+        const estandares = paraOCR ? ESTANDARES_MISTRAL : ESTANDARES;
+
         // Resolución
-        if (img.width < ESTANDARES.RESOLUCION_MINIMA) {
-          problemas.push(`Resolución muy baja (${img.width}px). Mínimo: ${ESTANDARES.RESOLUCION_MINIMA}px`);
+        if (img.width < estandares.RESOLUCION_MINIMA) {
+          problemas.push(`Resolución muy baja (${img.width}px). Mínimo: ${estandares.RESOLUCION_MINIMA}px`);
           esValido = false;
         }
 
         // Nitidez
-        if (nitidez < ESTANDARES.NITIDEZ_MINIMA) {
+        if (nitidez < estandares.NITIDEZ_MINIMA) {
           problemas.push(`Imagen borrosa (nitidez: ${Math.round(nitidez)}). Toma la foto sin movimiento`);
           esValido = false;
         }
 
         // Contraste
-        if (contraste < ESTANDARES.CONTRASTE_MINIMO) {
+        if (contraste < estandares.CONTRASTE_MINIMO) {
           problemas.push('Contraste muy bajo. Usa mejor iluminación');
           esValido = false;
         }
 
         // Ruido
-        if (ruido > ESTANDARES.RUIDO_MAXIMO) {
+        if (ruido > estandares.RUIDO_MAXIMO) {
           problemas.push('Imagen con demasiado ruido o pixelado');
           esValido = false;
         }
 
         // Tamaño
         const tamanoKB = file.size / 1024;
-        if (tamanoKB < ESTANDARES.TAMANO_MINIMO_KB) {
+        if (tamanoKB < estandares.TAMANO_MINIMO_KB) {
           problemas.push(`Archivo muy comprimido (${Math.round(tamanoKB)}KB)`);
           esValido = false;
         }
@@ -239,12 +256,14 @@ const analizarPDF = async (file) => {
 
 /**
  * Función principal exportada
+ * @param {File} file - Archivo a validar
+ * @param {Boolean} paraOCR - Si true, usa estándares flexibles para Mistral
  */
-export const validarCalidadArchivo = async (file) => {
+export const validarCalidadArchivo = async (file, paraOCR = false) => {
   if (file.type === 'application/pdf') {
     return await analizarPDF(file);
   } else if (file.type.startsWith('image/')) {
-    return await analizarImagen(file);
+    return await analizarImagen(file, paraOCR);
   } else {
     return {
       esValido: false,
