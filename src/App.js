@@ -189,7 +189,7 @@ const validateImageQuality = async (file) => {
 };
 
 const App = () => {
-  const [isDark, setIsDark] = useState(false);
+  const [isDark, setIsDark] = useState(true); // ✅ CAMBIO: Tema oscuro por defecto (true)
   const [step, setStep] = useState(1);
   const [cedula, setCedula] = useState('');
   const [isCedulaValid, setIsCedulaValid] = useState(false);
@@ -214,6 +214,11 @@ const App = () => {
 
   const vantaRef = useRef(null);
   const vantaEffect = useRef(null);
+
+  // ✅ NUEVA: Inicializar tema oscuro en el documento al montar
+  useEffect(() => {
+    document.documentElement.setAttribute('data-theme', 'dark');
+  }, []);
 
   // Toggle theme
   const toggleTheme = useCallback(() => {
