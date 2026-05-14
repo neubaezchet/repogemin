@@ -234,27 +234,31 @@ const App = () => {
     const mode = isDark ? 'dark' : 'light';
     const config = VANTA_CONFIG[mode];
     
-    if (step === 1 && window.VANTA) {
-      // Destroy existing before re-creating with new theme colors
-      if (vantaEffect.current) {
-        vantaEffect.current.destroy();
-        vantaEffect.current = null;
+    if (step === 1 && window.VANTA && window.VANTA.FOG && window.THREE) {
+      try {
+        // Destroy existing before re-creating with new theme colors
+        if (vantaEffect.current) {
+          vantaEffect.current.destroy();
+          vantaEffect.current = null;
+        }
+        vantaEffect.current = window.VANTA.FOG({
+          el: vantaRef.current,
+          THREE: window.THREE,
+          mouseControls: true,
+          touchControls: true,
+          gyroControls: false,
+          minHeight: 200.00,
+          minWidth: 200.00,
+          highlightColor: config.highlightColor,
+          midtoneColor: config.midtoneColor,
+          lowlightColor: config.lowlightColor,
+          baseColor: config.baseColor,
+          blurFactor: config.blurFactor,
+          speed: config.speed,
+        });
+      } catch (error) {
+        console.warn('⚠️ Vanta.js FOG initialization failed:', error);
       }
-      vantaEffect.current = window.VANTA.FOG({
-        el: vantaRef.current,
-        THREE: window.THREE,
-        mouseControls: true,
-        touchControls: true,
-        gyroControls: false,
-        minHeight: 200.00,
-        minWidth: 200.00,
-        highlightColor: config.highlightColor,
-        midtoneColor: config.midtoneColor,
-        lowlightColor: config.lowlightColor,
-        baseColor: config.baseColor,
-        blurFactor: config.blurFactor,
-        speed: config.speed,
-      });
     }
     if (step !== 1 && vantaEffect.current) {
       vantaEffect.current.destroy();
