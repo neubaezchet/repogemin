@@ -7,11 +7,35 @@ const App = lazy(() => import('./App'));
 
 // ✅ Loading fallback component
 const LoadingSpinner = () => (
-  <div className="flex items-center justify-center min-h-screen bg-gradient-to-br from-slate-50 to-slate-100">
-    <div className="flex flex-col items-center gap-4">
-      <div className="animate-spin rounded-full h-16 w-16 border-4 border-blue-200 border-t-blue-500"></div>
-      <p className="text-gray-600 font-medium">Cargando formulario...</p>
+  <div style={{
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    minHeight: '100vh',
+    background: 'linear-gradient(135deg, #0D1117 0%, #0A0F14 100%)',
+  }}>
+    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '16px' }}>
+      <div style={{
+        animation: 'spin 1s linear infinite',
+        borderRadius: '50%',
+        height: '64px',
+        width: '64px',
+        border: '4px solid rgba(255,255,255,0.1)',
+        borderTopColor: '#3B82F6',
+      }}></div>
+      <p style={{
+        textAlign: 'center',
+        color: '#A8B2BE',
+        fontWeight: '500',
+        fontSize: '14px',
+        margin: 0,
+      }}>Cargando formulario...</p>
     </div>
+    <style>{`
+      @keyframes spin {
+        to { transform: rotate(360deg); }
+      }
+    `}</style>
   </div>
 );
 
