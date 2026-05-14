@@ -502,6 +502,7 @@ const App = () => {
       'registro_civil_faltante': 'Registro civil del bebé',
       'nacido_vivo_faltante': 'Certificado de nacido vivo',
       'cedula_padre_faltante': 'Cédula del padre (ambas caras)',
+      'fotocopia_documento_identidad_faltante': 'Fotocopia del documento de identidad',
       'ilegible_recortada': 'Documento recortado',
       'ilegible_borrosa': 'Documento borroso',
       'ilegible_manchada': 'Documento con manchas o reflejos',
