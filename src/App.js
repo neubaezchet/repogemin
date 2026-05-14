@@ -134,6 +134,7 @@ const documentRequirements = {
     'Licencia o incapacidad de maternidad',
     'Epicrisis o resumen clínico',
     'Cédula de la madre',
+    'Fotocopia del documento de identidad',
     'Registro civil',
     'Certificado de nacido vivo',
   ],
