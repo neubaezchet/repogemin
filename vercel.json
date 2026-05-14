@@ -3,10 +3,6 @@
   "devCommand": "npm start",
   "installCommand": "npm install",
   "framework": "create-react-app",
-  "env": {
-    "REACT_APP_BACKEND_URL": "@react_app_backend_url"
-  },
-  "envPrefix": "REACT_APP_",
   "headers": [
     {
       "source": "/service-worker.js",
