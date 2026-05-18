@@ -18,8 +18,8 @@
   --bg-card:           rgba(16, 22, 30, 0.92);
   --bg-card-solid:     #10161E;
   --bg-card-elevated:  #141C26;
-  --bg-input:          rgba(255, 255, 255, 0.05);
-  --bg-input-focus:    rgba(255, 255, 255, 0.08);
+  --bg-input:          #1A2332;
+  --bg-input-focus:    #202A3A;
   --bg-hover:          rgba(59, 130, 246, 0.06);
   --bg-sidebar:        #080D12;
 
@@ -87,8 +87,8 @@
   --bg-secondary:      #0A0F14;
   --bg-card:           rgba(16, 22, 30, 0.92);
   --bg-card-solid:     #10161E;
-  --bg-input:          rgba(255, 255, 255, 0.05);
-  --bg-input-focus:    rgba(255, 255, 255, 0.08);
+  --bg-input:          #1A2332;
+  --bg-input-focus:    #202A3A;
   --bg-hover:          rgba(59, 130, 246, 0.06);
   --text-primary:      #F0F4F8;
   --text-secondary:    #A8B2BE;
