@@ -2,7 +2,7 @@ import { useState, useMemo, useCallback, useEffect, useRef } from 'react';
 import { validarCalidadArchivo } from './utils/validadorCalidad';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useDropzone } from 'react-dropzone';
-import {.
+import {
   UserCircleIcon,
   CheckCircleIcon,
   ExclamationCircleIcon,
