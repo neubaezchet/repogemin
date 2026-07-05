@@ -177,8 +177,10 @@ const documentRequirements = {
 };
 
 // Validación de calidad de imagen
+// paraOCR=true: estándares flexibles de Mistral — el backend auto-mejora a HD
+// lo que llegue borroso, así que aquí solo se rechaza lo verdaderamente ilegible.
 const validateImageQuality = async (file) => {
-  const resultado = await validarCalidadArchivo(file);
+  const resultado = await validarCalidadArchivo(file, true);
   
   return {
     isLegible: resultado.esValido,
