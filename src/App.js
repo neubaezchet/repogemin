@@ -1,5 +1,11 @@
 import { useState, useMemo, useCallback, useEffect, useRef } from 'react';
 import { validarCalidadArchivo } from './utils/validadorCalidad';
+import { initTenantBranding } from './tenantBranding';
+
+// 🏢 Slug de la empresa del link (repogemin.vercel.app/?empresa=mi-empresa)
+// Se envía al backend para AISLAR todas las consultas a esa empresa.
+const EMPRESA_SLUG = new URLSearchParams(window.location.search).get('empresa') || '';
+const empresaQuery = () => (EMPRESA_SLUG ? `?empresa=${encodeURIComponent(EMPRESA_SLUG)}` : '');
 import { motion, AnimatePresence } from 'framer-motion';
 import { useDropzone } from 'react-dropzone';
 import {
@@ -218,6 +224,14 @@ const App = () => {
   const vantaRef = useRef(null);
   const vantaEffect = useRef(null);
 
+  // 🎨 Branding multi-empresa: /?empresa={slug} pinta paleta + logo de la empresa
+  const [tenantBranding, setTenantBranding] = useState(null);
+  useEffect(() => {
+    let cancelled = false;
+    initTenantBranding().then(b => { if (!cancelled && b) setTenantBranding(b); });
+    return () => { cancelled = true; };
+  }, []);
+
   // ✅ NUEVA: Inicializar tema oscuro en el documento al montar
   useEffect(() => {
     document.documentElement.setAttribute('data-theme', 'dark');
@@ -371,16 +385,16 @@ const App = () => {
       
       console.log('🔍 URL del backend:', backendUrl);
       
-      // PASO 1: Validar empleado
-      const responseEmpleado = await fetch(`${backendUrl}/empleados/${cedula}`);
+      // PASO 1: Validar empleado (scoped a la empresa del link si hay slug)
+      const responseEmpleado = await fetch(`${backendUrl}/empleados/${cedula}${empresaQuery()}`);
       const dataEmpleado = await responseEmpleado.json();
 
       if (responseEmpleado.ok) {
         setUserName(dataEmpleado.nombre);
         setUserCompany(dataEmpleado.empresa);
-        
-        // PASO 2: ✅ VERIFICAR BLOQUEO
-        const responseBloqueo = await fetch(`${backendUrl}/verificar-bloqueo/${cedula}`);
+
+        // PASO 2: ✅ VERIFICAR BLOQUEO (solo casos de esta empresa si hay slug)
+        const responseBloqueo = await fetch(`${backendUrl}/verificar-bloqueo/${cedula}${empresaQuery()}`);
         const dataBloqueo = await responseBloqueo.json();
         
         if (dataBloqueo.bloqueado) {
@@ -591,7 +605,10 @@ const App = () => {
       endpoint = `${backendUrl}/subir-incapacidad/`;
       
       formData.append('cedula', cedula);
-      // ✅ NO enviar empresa - el backend la busca automáticamente
+      // ✅ Slug de la empresa del link: el backend aísla todo a esa empresa
+      if (EMPRESA_SLUG) {
+        formData.append('empresa', EMPRESA_SLUG);
+      }
       formData.append('tipo', incapacityType || subType || 'general');
       formData.append('email', email);
       formData.append('telefono', phoneNumber);
@@ -1167,6 +1184,18 @@ const App = () => {
           {/* Stepper Progress */}
           {!submissionComplete && <StepperProgress currentStep={step} />}
 
+          {/* Logo de la empresa (branding por slug) */}
+          {tenantBranding?.logo_url && (
+            <div className="flex justify-center mb-3">
+              <img
+                src={tenantBranding.logo_url}
+                alt={tenantBranding.empresa}
+                className="h-14 object-contain rounded-xl"
+                style={{ background: 'rgba(255,255,255,0.06)', padding: 4 }}
+              />
+            </div>
+          )}
+
           {/* Title */}
           <h1
             className="text-2xl sm:text-3xl font-bold mb-1 text-center"
@@ -1178,7 +1207,9 @@ const App = () => {
             className="text-center text-sm mb-8 font-medium"
             style={{ color: 'var(--text-tertiary)' }}
           >
-            Portal empresarial de gestión de incapacidades
+            {tenantBranding?.empresa
+              ? `${tenantBranding.empresa} · Gestión de incapacidades`
+              : 'Portal empresarial de gestión de incapacidades'}
           </p>
 
         <AnimatePresence mode="wait">

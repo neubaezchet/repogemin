@@ -54,7 +54,10 @@ const dedup = new RequestDeduplicator();
 
 export const buscarEmpleado = async (cedula) => {
   try {
-    const data = await dedup.fetch(`${API_BASE}/empleados/${cedula}`);
+    // Slug de la empresa del link (?empresa=) → búsqueda aislada a esa empresa
+    const slug = new URLSearchParams(window.location.search).get('empresa');
+    const q = slug ? `?empresa=${encodeURIComponent(slug)}` : '';
+    const data = await dedup.fetch(`${API_BASE}/empleados/${cedula}${q}`);
     return data;
   } catch (error) {
     throw new Error(error.message || "Error consultando empleado");
