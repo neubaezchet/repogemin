@@ -1,11 +1,6 @@
 import { useState, useMemo, useCallback, useEffect, useRef } from 'react';
 import { validarCalidadArchivo } from './utils/validadorCalidad';
 import { initTenantBranding } from './tenantBranding';
-
-// 🏢 Slug de la empresa del link (repogemin.vercel.app/?empresa=mi-empresa)
-// Se envía al backend para AISLAR todas las consultas a esa empresa.
-const EMPRESA_SLUG = new URLSearchParams(window.location.search).get('empresa') || '';
-const empresaQuery = () => (EMPRESA_SLUG ? `?empresa=${encodeURIComponent(EMPRESA_SLUG)}` : '');
 import { motion, AnimatePresence } from 'framer-motion';
 import { useDropzone } from 'react-dropzone';
 import {
@@ -26,6 +21,11 @@ import {
   SunIcon,
   MoonIcon,
 } from '@heroicons/react/24/solid';
+
+// 🏢 Slug de la empresa del link (repogemin.vercel.app/?empresa=mi-empresa)
+// Se envía al backend para AISLAR todas las consultas a esa empresa.
+const EMPRESA_SLUG = new URLSearchParams(window.location.search).get('empresa') || '';
+const empresaQuery = () => (EMPRESA_SLUG ? `?empresa=${encodeURIComponent(EMPRESA_SLUG)}` : '');
 
 // ═══════════════════════════════════════════════════════════
 // DESIGN SYSTEM — CSS Variable-based Professional Themes
