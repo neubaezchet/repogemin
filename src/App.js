@@ -588,18 +588,28 @@ const App = () => {
     let endpoint;
     const formData = new FormData();
 
+    // ⚡ OPTIMIZAR ARCHIVOS ANTES DE SUBIR (reduce ~90% el peso en fotos,
+    // sin dañar legibilidad: máx 2000px q85; PDFs solo compresión sin pérdida)
+    let archivosParaEnviar = Object.values(uploadedFiles);
+    try {
+      const { optimizarMultiples } = await import('./utils/fileOptimizer');
+      archivosParaEnviar = await optimizarMultiples(archivosParaEnviar);
+    } catch (optErr) {
+      console.warn('⚠️ Optimización no disponible, se envían originales:', optErr);
+      archivosParaEnviar = Object.values(uploadedFiles);
+    }
+
     if (modoReenvio) {
       // ✅ MODO REENVÍO: Completar documentos faltantes
       // ✅ CORRECCIÓN 2: Encoding correcto del serial (contiene espacios)
       endpoint = `${backendUrl}/casos/${encodeURIComponent(bloqueo.serial)}/completar`;
-      
-      const archivos = Object.values(uploadedFiles);
-      archivos.forEach(file => {
+
+      archivosParaEnviar.forEach(file => {
         formData.append('archivos', file);
       });
-      
+
       console.log(`🔄 Modo reenvío activado para caso ${bloqueo.serial}`);
-      
+
     } else {
       // ✅ MODO NORMAL: Todos los datos
       endpoint = `${backendUrl}/subir-incapacidad/`;
@@ -635,9 +645,8 @@ const App = () => {
       if (incapacityEndDate) {
         formData.append('incapacityEndDate', incapacityEndDate);
       }
-      
-      const archivos = Object.values(uploadedFiles);
-      archivos.forEach(file => {
+
+      archivosParaEnviar.forEach(file => {
         formData.append('archivos', file);
       });
     }
