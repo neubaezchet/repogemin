@@ -32,9 +32,9 @@ const ToastGuiaFotos = ({ visible, onClose }) => {
         mostrar ? 'opacity-100 translate-y-0' : 'opacity-0 -translate-y-4'
       }`}
     >
-      <div className="bg-white rounded-2xl shadow-2xl border-2 border-blue-500 max-w-md overflow-hidden">
+      <div className="bg-white rounded-2xl shadow-2xl border-2 border-indigo-500 max-w-md overflow-hidden">
         {/* Header */}
-        <div className="bg-gradient-to-r from-blue-600 to-blue-700 px-6 py-4 flex items-center justify-between">
+        <div className="bg-gradient-to-r from-indigo-600 to-violet-600 px-6 py-4 flex items-center justify-between">
           <div className="flex items-center gap-3">
             <CameraIcon className="w-6 h-6 text-white" />
             <h3 className="text-white font-bold text-lg">Guía para Fotos</h3>
@@ -50,7 +50,7 @@ const ToastGuiaFotos = ({ visible, onClose }) => {
         {/* Content */}
         <div className="p-6 space-y-4">
           {/* Imagen comparativa */}
-          <div className="bg-blue-50 rounded-xl p-4 border-2 border-blue-200">
+          <div className="bg-indigo-50 rounded-xl p-4 border-2 border-indigo-200">
             <div className="space-y-3">
               {/* Documento CORRECTO */}
               <div className="border-4 border-green-500 rounded-lg bg-white p-3">
@@ -59,11 +59,11 @@ const ToastGuiaFotos = ({ visible, onClose }) => {
                   <span className="font-bold text-green-700 text-sm">CORRECTO</span>
                 </div>
                 <svg className="w-full h-24" viewBox="0 0 200 80" xmlns="http://www.w3.org/2000/svg">
-                  <rect x="10" y="10" width="180" height="60" fill="#f0f9ff" stroke="#3b82f6" strokeWidth="2"/>
-                  <line x1="20" y1="20" x2="150" y2="20" stroke="#1e40af" strokeWidth="2"/>
-                  <line x1="20" y1="30" x2="180" y2="30" stroke="#60a5fa" strokeWidth="2"/>
-                  <line x1="20" y1="40" x2="140" y2="40" stroke="#60a5fa" strokeWidth="2"/>
-                  <line x1="20" y1="50" x2="170" y2="50" stroke="#60a5fa" strokeWidth="2"/>
+                  <rect x="10" y="10" width="180" height="60" fill="#eef2ff" stroke="#4f46e5" strokeWidth="2"/>
+                  <line x1="20" y1="20" x2="150" y2="20" stroke="#3730a3" strokeWidth="2"/>
+                  <line x1="20" y1="30" x2="180" y2="30" stroke="#818cf8" strokeWidth="2"/>
+                  <line x1="20" y1="40" x2="140" y2="40" stroke="#818cf8" strokeWidth="2"/>
+                  <line x1="20" y1="50" x2="170" y2="50" stroke="#818cf8" strokeWidth="2"/>
                   <circle cx="10" cy="10" r="3" fill="#16a34a"/>
                   <circle cx="190" cy="10" r="3" fill="#16a34a"/>
                   <circle cx="10" cy="70" r="3" fill="#16a34a"/>
@@ -108,8 +108,8 @@ const ToastGuiaFotos = ({ visible, onClose }) => {
                 'Enfoca bien y verifica que el texto sea legible'
               ].map((instruccion, idx) => (
                 <div key={idx} className="flex items-start gap-2">
-                  <div className="w-6 h-6 rounded-full bg-blue-100 flex items-center justify-center flex-shrink-0 mt-0.5">
-                    <span className="text-blue-700 text-xs font-bold">{idx + 1}</span>
+                  <div className="w-6 h-6 rounded-full bg-indigo-100 flex items-center justify-center flex-shrink-0 mt-0.5">
+                    <span className="text-indigo-700 text-xs font-bold">{idx + 1}</span>
                   </div>
                   <p className="text-sm text-gray-700">{instruccion}</p>
                 </div>
@@ -136,7 +136,7 @@ const ToastGuiaFotos = ({ visible, onClose }) => {
         <div className="bg-gray-50 px-6 py-4 border-t">
           <button
             onClick={handleClose}
-            className="w-full bg-blue-600 text-white rounded-lg py-2 font-semibold hover:bg-blue-700 transition-colors"
+            className="w-full bg-indigo-600 text-white rounded-lg py-2 font-semibold hover:bg-indigo-700 transition-colors"
           >
             Entendido
           </button>

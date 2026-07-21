@@ -35,18 +35,18 @@ const empresaQuery = () => (EMPRESA_SLUG ? `?empresa=${encodeURIComponent(EMPRES
 // Vanta.js nebula config per theme mode
 const VANTA_CONFIG = {
   light: {
-    highlightColor: 0x6359A3,
-    midtoneColor: 0xE8E4DF,
-    lowlightColor: 0xD5CFC8,
-    baseColor: 0xF8F6F4,
-    blurFactor: 0.82,
+    highlightColor: 0xA5B4FC,
+    midtoneColor: 0xC7D2FE,
+    lowlightColor: 0xEEF2FF,
+    baseColor: 0xFFFFFF,
+    blurFactor: 0.72,
     speed: 1.20,
   },
   dark: {
-    highlightColor: 0x6359A3,
-    midtoneColor: 0x1A1726,
-    lowlightColor: 0x121018,
-    baseColor: 0x0D0B14,
+    highlightColor: 0x818CF8,
+    midtoneColor: 0x1E1B4B,
+    lowlightColor: 0x131029,
+    baseColor: 0x0B0A18,
     blurFactor: 0.90,
     speed: 1.00,
   },
@@ -198,7 +198,7 @@ const validateImageQuality = async (file) => {
 };
 
 const App = () => {
-  const [isDark, setIsDark] = useState(true); // ✅ CAMBIO: Tema oscuro por defecto (true)
+  const [isDark, setIsDark] = useState(false); // Tema claro por defecto (Indigo 2026)
   const [step, setStep] = useState(1);
   const [cedula, setCedula] = useState('');
   const [isCedulaValid, setIsCedulaValid] = useState(false);
@@ -232,9 +232,9 @@ const App = () => {
     return () => { cancelled = true; };
   }, []);
 
-  // ✅ NUEVA: Inicializar tema oscuro en el documento al montar
+  // Inicializar tema claro en el documento al montar
   useEffect(() => {
-    document.documentElement.setAttribute('data-theme', 'dark');
+    document.documentElement.setAttribute('data-theme', 'light');
   }, []);
 
   // Toggle theme
@@ -733,6 +733,13 @@ const App = () => {
     }
   };
 
+  const getStepEyebrow = () => {
+    if (submissionComplete) return null;
+    const emojiPorPaso = { 1: '🪪', 2: '🙋', 3: '📋', 4: '✏️', 5: '📎', 6: '✉️' };
+    const normalizedStep = Math.min(Math.floor(step), 6);
+    return `PASO ${normalizedStep} DE 6 ${emojiPorPaso[normalizedStep] || ''}`;
+  };
+
   const getStepTitle = () => {
     switch (step) {
       case 1:
@@ -1205,9 +1212,19 @@ const App = () => {
             </div>
           )}
 
+          {/* Eyebrow: paso actual */}
+          {getStepEyebrow() && (
+            <p
+              className="text-center text-[11px] font-bold tracking-widest uppercase mb-2 font-display"
+              style={{ color: 'var(--accent-primary)' }}
+            >
+              {getStepEyebrow()}
+            </p>
+          )}
+
           {/* Title */}
           <h1
-            className="text-2xl sm:text-3xl font-bold mb-1 text-center"
+            className="text-2xl sm:text-3xl font-bold mb-1 text-center font-display"
             style={{ color: 'var(--text-primary)' }}
           >
             {getStepTitle()}

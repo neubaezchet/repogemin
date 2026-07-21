@@ -3,50 +3,50 @@
 @tailwind utilities;
 
 /* ═══════════════════════════════════════════════════════════════
-   GOOGLE FONTS — Inter + DM Sans (Enterprise Grade 2026)
+   GOOGLE FONTS — Plus Jakarta Sans + Outfit + JetBrains Mono (Indigo 2026)
    ═══════════════════════════════════════════════════════════════ */
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:ital,wght@0,300;0,400;0,500;0,600;0,700;0,800;1,400&family=Outfit:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap');
 
 /* ═══════════════════════════════════════════════════════════════
-   ENTERPRISE DARK THEME — "Midnight Slate" 2026
-   Paleta corporativa: Navy profundo + Azul eléctrico + Dorado
+   INDIGO 2026 — Tema claro
+   Paleta: Blanco + Índigo + Violeta (design system Neurobaeza 2026)
    ═══════════════════════════════════════════════════════════════ */
 :root {
   /* ── Backgrounds ── */
-  --bg-primary:        #0D1117;
-  --bg-secondary:      #0A0F14;
-  --bg-card:           rgba(16, 22, 30, 0.92);
-  --bg-card-solid:     #10161E;
-  --bg-card-elevated:  #141C26;
-  --bg-input:          #1A2332;
-  --bg-input-focus:    #202A3A;
-  --bg-hover:          rgba(59, 130, 246, 0.06);
-  --bg-sidebar:        #080D12;
+  --bg-primary:        #FFFFFF;
+  --bg-secondary:      #F8FAFC;
+  --bg-card:           rgba(255, 255, 255, 0.92);
+  --bg-card-solid:     #FFFFFF;
+  --bg-card-elevated:  #F8FAFC;
+  --bg-input:          #F1F5F9;
+  --bg-input-focus:    #E2E8F0;
+  --bg-hover:          rgba(79, 70, 229, 0.06);
+  --bg-sidebar:        #F8FAFC;
 
   /* ── Text ── */
-  --text-primary:      #F0F4F8;
-  --text-secondary:    #A8B2BE;
-  --text-tertiary:     #6B7A8D;
-  --text-muted:        #4A5568;
+  --text-primary:      #0F172A;
+  --text-secondary:    #475569;
+  --text-tertiary:     #64748B;
+  --text-muted:        #94A3B8;
 
   /* ── Borders ── */
-  --border-primary:    rgba(255, 255, 255, 0.06);
-  --border-focus:      #3B82F6;
-  --border-input:      rgba(255, 255, 255, 0.08);
-  --border-accent:     rgba(59, 130, 246, 0.3);
+  --border-primary:    rgba(15, 23, 42, 0.08);
+  --border-focus:      #4F46E5;
+  --border-input:      rgba(15, 23, 42, 0.10);
+  --border-accent:     rgba(79, 70, 229, 0.3);
 
-  /* ── Brand: Electric Blue ── */
-  --accent-primary:        #3B82F6;
-  --accent-primary-hover:  #2563EB;
-  --accent-primary-dark:   #1D4ED8;
-  --accent-primary-soft:   rgba(59, 130, 246, 0.12);
+  /* ── Brand: Índigo ── */
+  --accent-primary:        #4F46E5;
+  --accent-primary-hover:  #4338CA;
+  --accent-primary-dark:   #3730A3;
+  --accent-primary-soft:   rgba(79, 70, 229, 0.12);
   --accent-primary-text:   #FFFFFF;
-  --accent-glow:           rgba(59, 130, 246, 0.25);
+  --accent-glow:           rgba(79, 70, 229, 0.25);
 
-  /* ── Brand: Gold (Secundario) ── */
-  --accent-secondary:      #F59E0B;
-  --accent-secondary-hover:#D97706;
-  --accent-secondary-soft: rgba(245, 158, 11, 0.12);
+  /* ── Brand: Violeta (Secundario) ── */
+  --accent-secondary:      #7C3AED;
+  --accent-secondary-hover:#6D28D9;
+  --accent-secondary-soft: rgba(124, 58, 237, 0.12);
 
   /* ── Brand: Emerald (Terciario) ── */
   --accent-emerald:      #10B981;
@@ -63,44 +63,44 @@
   --info-soft:    rgba(99, 102, 241, 0.10);
 
   /* ── Glass ── */
-  --glass-bg:     rgba(14, 20, 30, 0.82);
-  --glass-border: rgba(255, 255, 255, 0.07);
-  --glass-shadow: 0 2px 8px rgba(0, 0, 0, 0.5), 0 1px 2px rgba(0, 0, 0, 0.4);
+  --glass-bg:     rgba(255, 255, 255, 0.85);
+  --glass-border: rgba(255, 255, 255, 0.88);
+  --glass-shadow: 0 24px 60px rgba(15, 23, 42, 0.08), 0 1px 2px rgba(15, 23, 42, 0.04);
 
   /* ── Shadows ── */
-  --shadow-sm:  0 1px 3px rgba(0, 0, 0, 0.4);
-  --shadow-md:  0 4px 12px rgba(0, 0, 0, 0.5);
-  --shadow-lg:  0 8px 32px rgba(0, 0, 0, 0.6);
-  --shadow-xl:  0 20px 60px rgba(0, 0, 0, 0.7);
-  --shadow-glow:0 0 24px rgba(59, 130, 246, 0.2);
+  --shadow-sm:  0 1px 3px rgba(15, 23, 42, 0.08);
+  --shadow-md:  0 4px 12px rgba(15, 23, 42, 0.08);
+  --shadow-lg:  0 8px 32px rgba(15, 23, 42, 0.10);
+  --shadow-xl:  0 20px 60px rgba(15, 23, 42, 0.12);
+  --shadow-glow:0 0 24px rgba(79, 70, 229, 0.2);
 
-  /* ── Vanta: Dark NET azul ── */
-  --nebula-highlight: 0x3B82F6;
-  --nebula-midtone:   0x0D1117;
-  --nebula-lowlight:  0x1E3A5F;
-  --nebula-base:      0x080D12;
+  /* ── Vanta: FOG índigo/violeta claro ── */
+  --nebula-highlight: 0xA5B4FC;
+  --nebula-midtone:   0xC7D2FE;
+  --nebula-lowlight:  0xEEF2FF;
+  --nebula-base:      0xFFFFFF;
 }
 
-/* Dark mode alias — mismo valor para compatibilidad con código existente */
+/* Dark mode alias — versión índigo/violeta sobre fondo oscuro */
 [data-theme="dark"] {
-  --bg-primary:        #0D1117;
-  --bg-secondary:      #0A0F14;
-  --bg-card:           rgba(16, 22, 30, 0.92);
-  --bg-card-solid:     #10161E;
-  --bg-input:          #1A2332;
-  --bg-input-focus:    #202A3A;
-  --bg-hover:          rgba(59, 130, 246, 0.06);
-  --text-primary:      #F0F4F8;
-  --text-secondary:    #A8B2BE;
-  --text-tertiary:     #6B7A8D;
-  --text-muted:        #4A5568;
-  --border-primary:    rgba(255, 255, 255, 0.06);
-  --border-input:      rgba(255, 255, 255, 0.08);
-  --accent-primary:        #3B82F6;
-  --accent-primary-hover:  #2563EB;
-  --accent-primary-soft:   rgba(59, 130, 246, 0.12);
-  --accent-secondary:      #F59E0B;
-  --accent-secondary-soft: rgba(245, 158, 11, 0.12);
+  --bg-primary:        #0F172A;
+  --bg-secondary:      #0B1120;
+  --bg-card:           rgba(15, 23, 42, 0.92);
+  --bg-card-solid:     #131C31;
+  --bg-input:          #1E293B;
+  --bg-input-focus:    #263449;
+  --bg-hover:          rgba(129, 140, 248, 0.08);
+  --text-primary:      #F8FAFC;
+  --text-secondary:    #CBD5E1;
+  --text-tertiary:     #94A3B8;
+  --text-muted:        #64748B;
+  --border-primary:    rgba(255, 255, 255, 0.08);
+  --border-input:      rgba(255, 255, 255, 0.10);
+  --accent-primary:        #818CF8;
+  --accent-primary-hover:  #6366F1;
+  --accent-primary-soft:   rgba(129, 140, 248, 0.16);
+  --accent-secondary:      #A78BFA;
+  --accent-secondary-soft: rgba(167, 139, 250, 0.16);
 }
 
 /* ═══════════════════════════════════════════════════════════════
